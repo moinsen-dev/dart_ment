@@ -1,5 +1,6 @@
 # dart_ment
 
+[![pub package](https://img.shields.io/pub/v/dart_ment.svg)](https://pub.dev/packages/dart_ment)
 ![coverage][coverage_badge]
 [![style: very good analysis][very_good_analysis_badge]][very_good_analysis_link]
 [![License: MIT][license_badge]][license_link]
@@ -21,7 +22,15 @@ dart_ment is an ambitious project that aims to automate the process of fixing co
 
 ## Project Status 🏗️
 
-This project is currently in its initial development phase. We are actively working on the core architecture and basic functionality. We welcome contributions, feedback, and ideas from the community!
+Current development status:
+- 🟢 Project specification and planning
+- 🟡 Core architecture design and initial setup
+- 🟡 Basic package structure on pub.dev
+- 🔴 Core components implementation
+- 🔴 Integration and testing
+- 🔴 Documentation
+
+See our [SPEC.md](SPEC.md) for detailed implementation plans.
 
 ### How You Can Help 🤝
 
@@ -34,9 +43,22 @@ We're looking for contributors interested in:
 - Integration ideas
 - Performance optimization
 
-## Getting Started 🔧
+## Installation 📦
 
-Currently, the project is in development. To contribute or test locally:
+```sh
+dart pub add dart_ment
+```
+
+Or add it to your `pubspec.yaml`:
+
+```yaml
+dependencies:
+  dart_ment: ^0.0.1
+```
+
+## Development Setup 💻
+
+To contribute or test locally:
 
 ```sh
 # Clone the repository
@@ -49,9 +71,7 @@ dart pub get
 dart test
 ```
 
-## Development Setup 💻
-
-If you want to contribute to development:
+For local development:
 
 ```sh
 # Activate locally
@@ -63,7 +83,7 @@ dart_ment --help
 
 ## Running Tests 🧪
 
-To run all unit tests use the following command:
+To run all unit tests:
 
 ```sh
 $ dart pub global activate coverage 1.2.0
@@ -71,7 +91,7 @@ $ dart test --coverage=coverage
 $ dart pub global run coverage:format_coverage --lcov --in=coverage --out=coverage/lcov.info
 ```
 
-To view the generated coverage report you can use [lcov](https://github.com/linux-test-project/lcov).
+To view the generated coverage report you can use [lcov](https://github.com/linux-test-project/lcov):
 
 ```sh
 # Generate Coverage Report
