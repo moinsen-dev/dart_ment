@@ -47,32 +47,35 @@ class ConfigCommand extends Command<int> {
   Future<int> _showConfig(ConfigManager configManager) async {
     _logger.info('Configuration directory: ${configManager.configPath}');
     _logger.info('');
-    
+
     final config = await configManager.loadConfig();
     _logger.info('Current configuration:');
     _printConfig(config, indent: 2);
-    
+
     _logger.info('');
-    _logger.info('Current model: ${config['model'] ?? 'gemini-1.5-flash (default)'}');
+    _logger.info(
+      'Current model: ${config['model'] ?? 'gemini-1.5-flash (default)'}',
+    );
     _logger.info('');
     _logger.info('To list and select models, use: ment models');
-    _logger.info('To set a model directly, use: ment config set model <model-id>');
-    
+    _logger
+        .info('To set a model directly, use: ment config set model <model-id>');
+
     return ExitCode.success.code;
   }
 
   Future<int> _setConfig(ConfigManager configManager) async {
     final args = argResults?.command?.rest ?? [];
-    
+
     if (args.length != 2) {
       _logger.err('Usage: ment config set <key> <value>');
       _logger.err('Example: ment config set model gemini-1.5-pro');
       return ExitCode.usage.code;
     }
-    
+
     final key = args[0];
     final value = args[1];
-    
+
     // Validate model selection
     if (key == 'model') {
       final model = AIModel.fromId(value);
@@ -85,10 +88,10 @@ class ConfigCommand extends Command<int> {
         return ExitCode.config.code;
       }
     }
-    
+
     await configManager.updateConfig(key, value);
     _logger.success('Configuration updated: $key = $value');
-    
+
     return ExitCode.success.code;
   }
 
@@ -101,7 +104,7 @@ class ConfigCommand extends Command<int> {
 
   void _printConfig(Map<String, dynamic> config, {int indent = 0}) {
     final indentStr = ' ' * indent;
-    
+
     config.forEach((key, value) {
       if (value is Map) {
         _logger.info('$indentStr$key:');

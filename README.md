@@ -93,7 +93,7 @@ Preview changes with `--dry-run` before applying them to your codebase
 <td>
 
 ### ⚡ Lightning Fast
-Analyzes and fixes hundreds of files in seconds
+Analyzes and fixes hundreds of files in seconds with smart token optimization
 
 </td>
 </tr>
@@ -108,6 +108,20 @@ Enforces consistent code style across your entire project
 
 ### 📊 Smart Suggestions
 Get improvement recommendations beyond just linting fixes
+
+</td>
+</tr>
+<tr>
+<td>
+
+### 📁 Flexible Targeting
+Analyze and fix specific directories without changing your working directory
+
+</td>
+<td>
+
+### 💰 Token Efficient
+Only analyzes files with errors by default, saving API costs
 
 </td>
 </tr>
@@ -146,7 +160,7 @@ dart pub global activate dart_ment
 
 ```yaml
 dev_dependencies:
-  dart_ment: ^0.1.0
+  dart_ment: ^0.2.0
 ```
 
 ## 💻 Usage
@@ -159,11 +173,18 @@ Get a comprehensive analysis of your codebase with AI-powered suggestions:
 # Basic analysis
 ment analyze
 
+# Analyze a specific directory
+ment analyze lib/src
+ment analyze example
+
 # With custom configuration
 ment analyze --config analysis_config.yaml
 
 # Disable AI suggestions (faster)
 ment analyze --no-suggestions
+
+# Analyze all files with AI (including files without errors)
+ment analyze --all-files
 ```
 
 ### 🛠️ Fix Issues Automatically
@@ -173,6 +194,10 @@ Let AI fix your linting issues intelligently:
 ```bash
 # Fix with API key as parameter
 ment fix --api-key YOUR_KEY
+
+# Fix issues in a specific directory
+ment fix lib
+ment fix test
 
 # Fix with environment variable
 export GEMINI_API_KEY=YOUR_KEY
@@ -328,7 +353,6 @@ See [.github/workflows/README.md](.github/workflows/README.md) for details.
 ## 📊 Roadmap
 
 - [ ] VS Code Extension
-- [ ] IntelliJ Plugin
 - [ ] Custom Lint Rules
 - [ ] Team Style Guides
 - [ ] Local LLM Support

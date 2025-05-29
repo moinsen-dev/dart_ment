@@ -1,12 +1,5 @@
 /// Available AI models and their configurations
 class AIModel {
-  final String id;
-  final String name;
-  final String provider;
-  final String description;
-  final int maxTokens;
-  final double temperature;
-
   const AIModel({
     required this.id,
     required this.name,
@@ -15,6 +8,12 @@ class AIModel {
     required this.maxTokens,
     this.temperature = 0.3,
   });
+  final String id;
+  final String name;
+  final String provider;
+  final String description;
+  final int maxTokens;
+  final double temperature;
 
   /// Get model by ID
   static AIModel? fromId(String id) {
@@ -56,7 +55,7 @@ class AIModel {
     id: 'gpt-4o',
     name: 'GPT-4 Optimized',
     provider: 'openai',
-    description: 'OpenAI\'s most capable model',
+    description: "OpenAI's most capable model",
     maxTokens: 4096,
   );
 

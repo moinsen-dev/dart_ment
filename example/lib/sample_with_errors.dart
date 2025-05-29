@@ -3,29 +3,29 @@
 class SampleClass {
   // prefer_final_fields
   String name = 'test';
-  
+
   // unnecessary_this
   void setName(String newName) {
     this.name = newName;
   }
-  
+
   // avoid_print
   void debugLog(String message) {
     print('Debug: $message');
   }
-  
+
   // prefer_single_quotes
   String getMessage() {
     return "Hello World";
   }
-  
+
   // unnecessary_new
   Object createObject() {
     return new Object();
-  }
-  
+
+
   // prefer_const_constructors
-  Widget buildWidget() {
+  buildWidget() {
     return Container();
   }
 }
@@ -33,12 +33,13 @@ class SampleClass {
 // sort_constructors_first
 class User {
   void doSomething() {}
-  
-  User(this.name);
-  
+
+  User(name);
+
   final String name;
 }
 
 // missing documentation
 class Widget {}
+
 class Container extends Widget {}

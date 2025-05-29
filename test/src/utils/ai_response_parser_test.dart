@@ -18,7 +18,10 @@ The code has been corrected.
 ''';
 
         final result = AIResponseParser.extractCode(response);
-        expect(result, equals("class Example {\n  final String name = 'test';\n}"));
+        expect(
+          result,
+          equals("class Example {\n  final String name = 'test';\n}"),
+        );
       });
 
       test('extracts code from plain markdown code block', () {
@@ -31,26 +34,37 @@ class Example {
 ''';
 
         final result = AIResponseParser.extractCode(response);
-        expect(result, equals("class Example {\n  final String name = 'test';\n}"));
+        expect(
+          result,
+          equals("class Example {\n  final String name = 'test';\n}"),
+        );
       });
 
       test('returns clean code when no markdown formatting', () {
-        const response = '''class Example {
-  final String name = 'test';
-}''';
-
-        final result = AIResponseParser.extractCode(response);
-        expect(result, equals("class Example {\n  final String name = 'test';\n}"));
-      });
-
-      test('removes explanation lines before code', () {
-        const response = '''Here is the fixed code:
+        const response = '''
 class Example {
   final String name = 'test';
 }''';
 
         final result = AIResponseParser.extractCode(response);
-        expect(result, equals("class Example {\n  final String name = 'test';\n}"));
+        expect(
+          result,
+          equals("class Example {\n  final String name = 'test';\n}"),
+        );
+      });
+
+      test('removes explanation lines before code', () {
+        const response = '''
+Here is the fixed code:
+class Example {
+  final String name = 'test';
+}''';
+
+        final result = AIResponseParser.extractCode(response);
+        expect(
+          result,
+          equals("class Example {\n  final String name = 'test';\n}"),
+        );
       });
 
       test('handles response with multiple code blocks', () {
@@ -72,7 +86,8 @@ class B {}
       });
 
       test('handles malformed markdown', () {
-        const response = '''```dart
+        const response = '''
+```dart
 import 'dart:io';
 
 class Test {
