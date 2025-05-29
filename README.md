@@ -208,6 +208,9 @@ ment fix --dry-run
 
 # Select a different AI model
 ment fix --model gemini-1.5-pro
+
+# Set maximum fix iterations (default: 3)
+ment fix --max-iterations 5
 ```
 
 ### 🤖 Manage AI Models

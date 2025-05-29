@@ -62,6 +62,19 @@ void main() {
       expect(argParser.options['dry-run']!.negatable, isFalse);
     });
 
+    test('accepts max-iterations option', () async {
+      final command = FixCommand(logger: logger);
+      final argParser = command.argParser;
+
+      expect(argParser.options.containsKey('max-iterations'), isTrue);
+      expect(argParser.options['max-iterations']!.defaultsTo, equals('3'));
+    });
+    
+    test('has correct invocation', () {
+      final command = FixCommand(logger: logger);
+      expect(command.invocation, equals('fix [path]'));
+    });
+
     // TODO(udi): Fix this test - it's failing after adding folder argument support
     // The test needs to be refactored to properly mock ConfigManager
     // test('requires API key', () async {
