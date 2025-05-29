@@ -6,6 +6,38 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 dart_ment is an AI-powered automated code repair and refactoring CLI tool for Dart projects. It analyzes Dart code for linting issues and uses AI to automatically fix them.
 
+## 🚨 IMPORTANT: Release Checklist
+
+When preparing a new release, ALWAYS:
+
+1. **Update Version Numbers**:
+   - Update version in `pubspec.yaml`
+   - Update version in `lib/src/version.dart` (should match pubspec.yaml)
+   - Use semantic versioning: MAJOR.MINOR.PATCH
+
+2. **Update CHANGELOG.md**:
+   - Add a new section for the version with today's date
+   - List all changes under appropriate categories:
+     - `Added` for new features
+     - `Changed` for changes in existing functionality
+     - `Fixed` for bug fixes
+     - `Deprecated` for soon-to-be removed features
+     - `Removed` for removed features
+     - `Security` for vulnerability fixes
+   - Follow the [Keep a Changelog](https://keepachangelog.com) format
+
+3. **Update Documentation**:
+   - Update README.md if new commands or features were added
+   - Update any affected documentation
+   - Ensure examples reflect the new version
+
+4. **Version Consistency**:
+   - Ensure all version references are consistent across:
+     - pubspec.yaml
+     - lib/src/version.dart
+     - CHANGELOG.md
+     - Git tags (when creating release)
+
 ## Development Commands
 
 ### Essential Commands
@@ -27,9 +59,11 @@ dart pub global activate --source path .
 ```
 
 ### Available CLI Commands
-- `ment fix` - Main command to fix linting issues using AI (TODO: not yet implemented)
-- `ment analyze` - Analyze code quality metrics (TODO: not yet implemented)
-- `ment sample` - Sample command from template
+- `ment analyze` - Analyze code quality metrics with AI-powered suggestions
+- `ment config` - Manage configuration settings and API keys
+- `ment fix` - Fix linting issues using AI (supports --model flag for model selection)
+- `ment models` - List and select available AI models from Gemini API
+- `ment sample` - Sample command from template (for development reference)
 - `ment update` - Check for CLI updates
 
 ## Architecture
@@ -55,9 +89,22 @@ Configuration is loaded from `default_config.yaml` and can be overridden by user
 
 ## Implementation Status
 
-According to SPEC.md, the project is in early stages:
-- Phase 1 (Setup): Complete
-- Phase 2 (Architecture): 40% complete
-- Main `fix` and `analyze` commands are not yet implemented
+Current implementation status:
+- Phase 1 (Setup): Complete ✅
+- Phase 2 (Architecture): Complete ✅
+- Phase 3 (Core Features): Complete ✅
+  - `fix` command: Implemented with AI-powered fixes
+  - `analyze` command: Implemented with suggestions
+  - Configuration system: User home directory based
+  - Model selection: Dynamic model listing and selection
+  - AI response parsing: Robust markdown handling
+
+### Recent Additions (v0.2.0)
+- User configuration directory (`~/.dart_ment/`)
+- Model selection via `--model` flag
+- `ment models` command for model management
+- `ment config` command for settings management
+- Secure API key storage
+- AI response parser for handling various formats
 
 When implementing new features, follow the existing command pattern and ensure proper error handling with meaningful exit codes.
