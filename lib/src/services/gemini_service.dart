@@ -1,6 +1,7 @@
+import 'dart:convert';
 import 'package:dart_ment/src/models/ai_models.dart';
 import 'package:dart_ment/src/utils/ai_response_parser.dart';
-import 'package:flutter_gemini/flutter_gemini.dart';
+import 'package:http/http.dart' as http;
 
 /// Service for interacting with Google Gemini AI
 class GeminiService {
@@ -11,7 +12,7 @@ class GeminiService {
 
   /// Initialize the Gemini service
   void initialize() {
-    Gemini.init(apiKey: apiKey);
+    // No initialization needed for HTTP client
   }
 
   /// Generate a fix suggestion for the given code issue
@@ -35,17 +36,11 @@ IMPORTANT: Return ONLY the fixed Dart code without any markdown formatting, code
 ''';
 
     try {
-      final response = await Gemini.instance.prompt(
-        parts: [
-          Part.text(prompt),
-        ],
-        model: model?.id,
-      );
-
-      if (response?.output == null) return null;
+      final response = await _makeGeminiRequest(prompt);
+      if (response == null) return null;
 
       // Use AIResponseParser to extract clean code
-      return AIResponseParser.extractCode(response!.output!);
+      return AIResponseParser.extractCode(response);
     } catch (e) {
       throw Exception('Failed to generate fix: $e');
     }
@@ -70,17 +65,11 @@ Provide a list of specific, actionable suggestions to improve code quality, perf
 ''';
 
     try {
-      final response = await Gemini.instance.prompt(
-        parts: [
-          Part.text(prompt),
-        ],
-        model: model?.id,
-      );
-
-      if (response?.output == null) return [];
+      final response = await _makeGeminiRequest(prompt);
+      if (response == null) return [];
 
       // Parse the response into a list of suggestions
-      final suggestions = response!.output!
+      final suggestions = response
           .split('\n')
           .where(
             (line) =>
@@ -93,5 +82,59 @@ Provide a list of specific, actionable suggestions to improve code quality, perf
     } catch (e) {
       throw Exception('Failed to analyze code: $e');
     }
+  }
+
+  /// Make a request to the Gemini API
+  Future<String?> _makeGeminiRequest(String prompt) async {
+    final modelId = model?.id ?? 'gemini-1.5-flash';
+    final url = Uri.parse(
+      'https://generativelanguage.googleapis.com/v1beta/models/$modelId:generateContent?key=$apiKey',
+    );
+
+    final requestBody = {
+      'contents': [
+        {
+          'parts': [
+            {'text': prompt}
+          ]
+        }
+      ],
+      'generationConfig': {
+        'temperature': 0.1,
+        'topK': 1,
+        'topP': 1,
+        'maxOutputTokens': 8192,
+      }
+    };
+
+    try {
+      final response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode(requestBody),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        final candidates = data['candidates'] as List<dynamic>?;
+        if (candidates != null && candidates.isNotEmpty) {
+          final candidate = candidates[0] as Map<String, dynamic>;
+          final content = candidate['content'] as Map<String, dynamic>?;
+          final parts = content?['parts'] as List<dynamic>?;
+          if (parts != null && parts.isNotEmpty) {
+            final part = parts[0] as Map<String, dynamic>;
+            return part['text'] as String?;
+          }
+        }
+      } else {
+        throw Exception('API request failed: ${response.statusCode} ${response.body}');
+      }
+    } catch (e) {
+      throw Exception('Failed to make API request: $e');
+    }
+    
+    return null;
   }
 }

@@ -1,9 +1,42 @@
+import 'dart:convert';
 import 'dart:io' show Platform;
 
 import 'package:args/command_runner.dart';
 import 'package:dart_ment/src/config/config_manager.dart';
-import 'package:flutter_gemini/flutter_gemini.dart';
+import 'package:http/http.dart' as http;
 import 'package:mason_logger/mason_logger.dart';
+
+/// Simple model class to replace GeminiModel
+class _ModelInfo {
+  _ModelInfo({
+    required this.name,
+    this.displayName,
+    this.version,
+    this.inputTokenLimit,
+    this.outputTokenLimit,
+    this.supportedGenerationMethods,
+  });
+
+  factory _ModelInfo.fromJson(Map<String, dynamic> json) {
+    return _ModelInfo(
+      name: json['name'] as String,
+      displayName: json['displayName'] as String?,
+      version: json['version'] as String?,
+      inputTokenLimit: json['inputTokenLimit'] as int?,
+      outputTokenLimit: json['outputTokenLimit'] as int?,
+      supportedGenerationMethods:
+          (json['supportedGenerationMethods'] as List<dynamic>?)
+              ?.cast<String>(),
+    );
+  }
+
+  final String name;
+  final String? displayName;
+  final String? version;
+  final int? inputTokenLimit;
+  final int? outputTokenLimit;
+  final List<String>? supportedGenerationMethods;
+}
 
 /// {@template models_command}
 /// `ment models` command to list and select AI models.
@@ -60,8 +93,8 @@ class ModelsCommand extends Command<int> {
       return ExitCode.config.code;
     }
 
-    // Initialize Gemini
-    Gemini.init(apiKey: apiKey);
+    // Store API key for use in HTTP calls
+    _apiKey = apiKey;
 
     // Handle different options
     final showList = argResults?['list'] as bool? ?? false;
@@ -79,12 +112,39 @@ class ModelsCommand extends Command<int> {
     return ExitCode.success.code;
   }
 
+  late final String _apiKey;
+
+  /// Fetch models from Gemini API
+  Future<List<_ModelInfo>> _fetchModels() async {
+    final url =
+        Uri.parse('https://generativelanguage.googleapis.com/v1beta/models')
+            .replace(queryParameters: {'key': _apiKey});
+
+    final response = await http.get(url);
+
+    if (response.statusCode != 200) {
+      throw Exception(
+          'Failed to fetch models: ${response.statusCode} - ${response.body}');
+    }
+
+    final data = json.decode(response.body) as Map<String, dynamic>;
+    final modelsJson = data['models'] as List<dynamic>?;
+
+    if (modelsJson == null) {
+      return [];
+    }
+
+    return modelsJson
+        .map((json) => _ModelInfo.fromJson(json as Map<String, dynamic>))
+        .toList();
+  }
+
   Future<int> _listModels(ConfigManager configManager) async {
     final progress =
         _logger.progress('Fetching available models from Gemini API');
 
     try {
-      final models = await Gemini.instance.listModels();
+      final models = await _fetchModels();
       progress.complete('Found ${models.length} available models');
 
       if (models.isEmpty) {
@@ -99,7 +159,7 @@ class ModelsCommand extends Command<int> {
       // Filter and prepare model data
       final modelData = <Map<String, String>>[];
       for (final model in models) {
-        final modelId = model.name?.replaceAll('models/', '') ?? 'Unknown';
+        final modelId = model.name.replaceAll('models/', '');
         final displayName = model.displayName ?? modelId;
 
         // Skip non-generative models
@@ -183,7 +243,7 @@ class ModelsCommand extends Command<int> {
         _logger.progress('Fetching available models from Gemini API');
 
     try {
-      final models = await Gemini.instance.listModels();
+      final models = await _fetchModels();
       progress.complete('Found ${models.length} available models');
 
       if (models.isEmpty) {
@@ -195,7 +255,7 @@ class ModelsCommand extends Command<int> {
       final generativeModels = models
           .where(
             (m) =>
-                (m.name?.contains('gemini') ?? false) &&
+                m.name.contains('gemini') &&
                 (m.supportedGenerationMethods?.contains('generateContent') ??
                     false),
           )
@@ -212,10 +272,10 @@ class ModelsCommand extends Command<int> {
 
       // Create choices for selection with better formatting
       final choices = <String>[];
-      final modelMap = <String, GeminiModel>{};
+      final modelMap = <String, _ModelInfo>{};
 
       for (final model in generativeModels) {
-        final modelId = model.name?.replaceAll('models/', '') ?? 'Unknown';
+        final modelId = model.name.replaceAll('models/', '');
         final displayName = model.displayName ?? modelId;
         final inputTokens = _formatTokenLimit(model.inputTokenLimit);
         final outputTokens = _formatTokenLimit(model.outputTokenLimit);
@@ -235,7 +295,7 @@ class ModelsCommand extends Command<int> {
       // Find default selection (current model or first)
       var defaultChoice = choices.first;
       for (var i = 0; i < generativeModels.length; i++) {
-        final modelId = generativeModels[i].name?.replaceAll('models/', '');
+        final modelId = generativeModels[i].name.replaceAll('models/', '');
         if (modelId == currentModel) {
           defaultChoice = choices[i];
           break;
@@ -257,7 +317,7 @@ class ModelsCommand extends Command<int> {
         return ExitCode.software.code;
       }
 
-      final modelId = selectedModel.name?.replaceAll('models/', '') ?? '';
+      final modelId = selectedModel.name.replaceAll('models/', '');
       if (modelId.isEmpty) {
         _logger.err('Invalid model selected');
         return ExitCode.software.code;
@@ -283,7 +343,7 @@ class ModelsCommand extends Command<int> {
     final progress = _logger.progress('Validating model');
 
     try {
-      final models = await Gemini.instance.listModels();
+      final models = await _fetchModels();
       final modelExists = models.any(
         (m) => m.name == 'models/$normalizedId' || m.name == normalizedId,
       );
