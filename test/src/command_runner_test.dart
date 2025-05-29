@@ -156,7 +156,7 @@ void main() {
 
       test('enables verbose logging for sub commands', () async {
         when(() => logger.progress(any())).thenReturn(_MockProgress());
-        
+
         final result = await commandRunner.run([
           '--verbose',
           'analyze',

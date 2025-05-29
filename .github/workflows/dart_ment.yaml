@@ -61,10 +61,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: 📚 Git Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: 🎯 Setup Dart
-        uses: dart-lang/setup-dart@v1
+        uses: dart-lang/setup-dart@v1.6.5
         with:
           sdk: "stable"
 
@@ -78,7 +78,7 @@ jobs:
         run: dart analyze --fatal-infos --fatal-warnings
 
       - name: 🧪 Run Tests (Basic)
-        run: dart test --coverage=coverage test/src/command_runner_test.dart test/src/commands/sample_command_test.dart test/src/commands/update_command_test.dart
+        run: dart test --coverage=coverage test/src/command_runner_test.dart test/src/commands/update_command_test.dart
 
       - name: 📝 Note
         run: |

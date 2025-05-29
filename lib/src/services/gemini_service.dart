@@ -94,5 +94,4 @@ Provide a list of specific, actionable suggestions to improve code quality, perf
       throw Exception('Failed to analyze code: $e');
     }
   }
-
 }

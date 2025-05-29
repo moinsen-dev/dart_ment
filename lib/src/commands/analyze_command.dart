@@ -311,7 +311,7 @@ class AnalyzeCommand extends Command<int> {
 
         if (totalIssues > 0) {
           final shouldApplyFixes = argResults?['apply-fixes'] as bool? ?? false;
-          
+
           if (shouldApplyFixes) {
             if (geminiService == null) {
               _logger.err(
@@ -342,6 +342,7 @@ class AnalyzeCommand extends Command<int> {
       return ExitCode.software.code;
     }
   }
+
   /// Apply fixes to files with issues
   Future<void> _applyFixes({
     required Map<String, List<String>> filesWithIssues,
@@ -354,7 +355,7 @@ class AnalyzeCommand extends Command<int> {
     var totalFixedCount = 0;
     var currentFileNum = 0;
     final totalFiles = filesWithIssues.length;
-    
+
     // Create DartFormatter instance
     final formatter = DartFormatter(
       languageVersion: DartFormatter.latestLanguageVersion,
@@ -377,7 +378,7 @@ class AnalyzeCommand extends Command<int> {
 
       while (hasRemainingIssues && iteration < maxIterations) {
         iteration++;
-        
+
         // Re-analyze the file to get current issues
         final currentErrors = await analyzerService.analyzeFile(filePath);
         if (currentErrors.isEmpty) {

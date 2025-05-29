@@ -196,7 +196,7 @@ class FixCommand extends Command<int> {
       var totalFixedCount = 0;
       var currentFileNum = 0;
       final totalFiles = filesWithIssues.length;
-      
+
       // Create DartFormatter instance
       final formatter = DartFormatter(
         languageVersion: DartFormatter.latestLanguageVersion,
@@ -219,13 +219,14 @@ class FixCommand extends Command<int> {
 
         while (hasRemainingIssues && iteration < maxIterations) {
           iteration++;
-          
+
           // Re-analyze the file to get current issues
           final currentErrors = await analyzerService.analyzeFile(filePath);
           if (currentErrors.isEmpty) {
             hasRemainingIssues = false;
             if (iteration > 1) {
-              _logger.success('  ✓ All issues fixed after $iteration iterations');
+              _logger
+                  .success('  ✓ All issues fixed after $iteration iterations');
             }
             break;
           }
@@ -299,7 +300,7 @@ class FixCommand extends Command<int> {
             );
             hasRemainingIssues = false;
           }
-          
+
           // In dry-run mode, only do one iteration
           if (isDryRun) {
             hasRemainingIssues = false;

@@ -69,7 +69,7 @@ void main() {
       expect(argParser.options.containsKey('max-iterations'), isTrue);
       expect(argParser.options['max-iterations']!.defaultsTo, equals('3'));
     });
-    
+
     test('has correct invocation', () {
       final command = FixCommand(logger: logger);
       expect(command.invocation, equals('fix [path]'));

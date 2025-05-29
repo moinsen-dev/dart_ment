@@ -258,12 +258,12 @@ anthropic_api_key: ""
   /// Quote YAML string if it contains special characters
   String _quoteYamlString(String value) {
     // Check if string needs quoting
-    if (value.contains('*') || 
-        value.contains('&') || 
-        value.contains('!') || 
-        value.contains('[') || 
-        value.contains(']') || 
-        value.contains('{') || 
+    if (value.contains('*') ||
+        value.contains('&') ||
+        value.contains('!') ||
+        value.contains('[') ||
+        value.contains(']') ||
+        value.contains('{') ||
         value.contains('}') ||
         value.contains(':') ||
         value.contains(',') ||
