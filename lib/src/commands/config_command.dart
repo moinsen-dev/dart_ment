@@ -53,10 +53,10 @@ class ConfigCommand extends Command<int> {
     _printConfig(config, indent: 2);
     
     _logger.info('');
-    _logger.info('Available AI models:');
-    for (final model in AIModel.availableModels.where((m) => m.isSupported)) {
-      _logger.info('  - ${model.id}: ${model.description}');
-    }
+    _logger.info('Current model: ${config['model'] ?? 'gemini-1.5-flash (default)'}');
+    _logger.info('');
+    _logger.info('To list and select models, use: ment models');
+    _logger.info('To set a model directly, use: ment config set model <model-id>');
     
     return ExitCode.success.code;
   }

@@ -10,7 +10,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - **User Configuration Directory**: Created `~/.dart_ment/` directory for storing user configurations and API keys
 - **Model Selection**: Added support for selecting different AI models via `--model` flag
+- **Models Command**: New `ment models` command to list and select available Gemini models
 - **Configuration Manager**: Implemented centralized configuration management in user's home directory
+- **Config Command**: Added `ment config` command for managing settings and API keys
 - **API Key Security**: Secure storage of API keys in separate file with restrictive permissions
 - **AI Response Parser**: Robust parsing of AI responses to handle various formatting styles
 - **Multiple Model Support**: Framework for supporting multiple AI providers (Gemini, OpenAI, Anthropic)
