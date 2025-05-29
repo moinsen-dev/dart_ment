@@ -14,19 +14,10 @@ import 'package:path/path.dart' as path;
 /// {@endtemplate}
 class FixCommand extends Command<int> {
   /// {@macro fix_command}
-  FixCommand({
-    required Logger logger,
-  }) : _logger = logger {
+  FixCommand({required Logger logger}) : _logger = logger {
     argParser
-      ..addOption(
-        'config',
-        abbr: 'c',
-        help: 'Path to configuration file',
-      )
-      ..addOption(
-        'api-key',
-        help: 'Google Gemini API key',
-      )
+      ..addOption('config', abbr: 'c', help: 'Path to configuration file')
+      ..addOption('api-key', help: 'Google Gemini API key')
       ..addOption(
         'model',
         abbr: 'm',
@@ -52,7 +43,8 @@ class FixCommand extends Command<int> {
   final Logger _logger;
 
   @override
-  String get description => 'Fix linting issues using AI assistance.\n'
+  String get description =>
+      'Fix linting issues using AI assistance.\n'
       'Usage: ment fix [path]';
 
   @override
@@ -64,15 +56,16 @@ class FixCommand extends Command<int> {
   @override
   Future<int> run() async {
     // Get the target directory from positional argument or current directory
-    final targetPath =
-        (argResults?.rest.isNotEmpty ?? false) ? argResults!.rest.first : '.';
+    final targetPath = (argResults?.rest.isNotEmpty ?? false)
+        ? argResults!.rest.first
+        : '.';
 
     // Resolve the absolute path
     final resolvedPath = path.isAbsolute(targetPath)
         ? targetPath
         : targetPath == '.'
-            ? Directory.current.path
-            : path.join(Directory.current.path, targetPath);
+        ? Directory.current.path
+        : path.join(Directory.current.path, targetPath);
 
     // Validate the path exists and is a directory
     final targetDir = Directory(resolvedPath);
@@ -94,7 +87,8 @@ class FixCommand extends Command<int> {
       final apiKeys = await configManager.loadApiKeys();
 
       // Get model selection
-      final modelId = argResults?['model'] as String? ??
+      final modelId =
+          argResults?['model'] as String? ??
           config['model'] as String? ??
           AIModel.gemini15Flash.id;
       final model = AIModel.fromId(modelId);
@@ -109,7 +103,8 @@ class FixCommand extends Command<int> {
       }
 
       // Get API key
-      final apiKey = argResults?['api-key'] as String? ??
+      final apiKey =
+          argResults?['api-key'] as String? ??
           apiKeys[model.apiKeyName] ??
           Platform.environment['GEMINI_API_KEY'];
 
@@ -129,9 +124,7 @@ class FixCommand extends Command<int> {
 
       _logger.info('Using model: ${model.name}');
 
-      final analyzerService = AnalyzerService(
-        projectPath: resolvedPath,
-      );
+      final analyzerService = AnalyzerService(projectPath: resolvedPath);
       await analyzerService.initialize();
 
       // Get Dart files
@@ -144,8 +137,8 @@ class FixCommand extends Command<int> {
         includePaths: useConfigIncludes
             ? (analysisConfig?['include'] as List<dynamic>?)?.cast<String>()
             : null,
-        excludePaths:
-            (analysisConfig?['exclude'] as List<dynamic>?)?.cast<String>(),
+        excludePaths: (analysisConfig?['exclude'] as List<dynamic>?)
+            ?.cast<String>(),
       );
       progress.complete('Found ${dartFiles.length} Dart files');
 
@@ -158,8 +151,9 @@ class FixCommand extends Command<int> {
         final file = dartFiles[i];
         final relativePath = path.relative(file, from: Directory.current.path);
         final fileNum = i + 1;
-        final percentage =
-            ((fileNum / dartFiles.length) * 100).toStringAsFixed(1);
+        final percentage = ((fileNum / dartFiles.length) * 100).toStringAsFixed(
+          1,
+        );
 
         // Update progress with current file info
         analysisProgress?.cancel();
@@ -189,14 +183,12 @@ class FixCommand extends Command<int> {
 
       // Generate and apply fixes
       final isDryRun = argResults?['dry-run'] as bool? ?? false;
-      final maxIterations = int.tryParse(
-            argResults?['max-iterations'] as String? ?? '3',
-          ) ??
-          3;
+      final maxIterations =
+          int.tryParse(argResults?['max-iterations'] as String? ?? '3') ?? 3;
       var totalFixedCount = 0;
       var currentFileNum = 0;
       final totalFiles = filesWithIssues.length;
-      
+
       // Create DartFormatter instance
       final formatter = DartFormatter(
         languageVersion: DartFormatter.latestLanguageVersion,
@@ -204,8 +196,10 @@ class FixCommand extends Command<int> {
 
       for (final entry in filesWithIssues.entries) {
         final filePath = entry.key;
-        final relativePath =
-            path.relative(filePath, from: Directory.current.path);
+        final relativePath = path.relative(
+          filePath,
+          from: Directory.current.path,
+        );
         currentFileNum++;
 
         _logger.info(
@@ -219,13 +213,15 @@ class FixCommand extends Command<int> {
 
         while (hasRemainingIssues && iteration < maxIterations) {
           iteration++;
-          
+
           // Re-analyze the file to get current issues
           final currentErrors = await analyzerService.analyzeFile(filePath);
           if (currentErrors.isEmpty) {
             hasRemainingIssues = false;
             if (iteration > 1) {
-              _logger.success('  ✓ All issues fixed after $iteration iterations');
+              _logger.success(
+                '  ✓ All issues fixed after $iteration iterations',
+              );
             }
             break;
           }
@@ -241,8 +237,8 @@ class FixCommand extends Command<int> {
 
           for (final issue in issues) {
             issueNum++;
-            final issueProgress =
-                ((issueNum / issues.length) * 100).toStringAsFixed(0);
+            final issueProgress = ((issueNum / issues.length) * 100)
+                .toStringAsFixed(0);
 
             _logger.detail('    Issue $issueNum/${issues.length}: $issue');
 
@@ -299,7 +295,7 @@ class FixCommand extends Command<int> {
             );
             hasRemainingIssues = false;
           }
-          
+
           // In dry-run mode, only do one iteration
           if (isDryRun) {
             hasRemainingIssues = false;

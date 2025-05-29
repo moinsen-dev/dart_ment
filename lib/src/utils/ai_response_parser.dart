@@ -30,10 +30,10 @@ class AIResponseParser {
 
     for (final line in lines) {
       final trimmedLine = line.trim();
-      
+
       // Skip markdown code fence lines
-      if (trimmedLine == '```dart' || 
-          trimmedLine == '```' || 
+      if (trimmedLine == '```dart' ||
+          trimmedLine == '```' ||
           trimmedLine.startsWith('```')) {
         inCodeBlock = !inCodeBlock;
         continue;
@@ -48,7 +48,7 @@ class AIResponseParser {
     }
 
     final result = filteredLines.join('\n').trim();
-    
+
     // Strategy 3: Validate the result looks like Dart code
     if (_looksLikeDartCode(result)) {
       return result;
@@ -61,9 +61,16 @@ class AIResponseParser {
   /// Check if a line looks like an explanation rather than code
   static bool _isExplanationLine(String line) {
     final explanationPatterns = [
-      'here is', "here's", 'this is', 'the following',
-      'fixed code', 'corrected code', 'updated code',
-      'solution:', 'fix:', 'output:',
+      'here is',
+      "here's",
+      'this is',
+      'the following',
+      'fixed code',
+      'corrected code',
+      'updated code',
+      'solution:',
+      'fix:',
+      'output:',
     ];
 
     final lowerLine = line.toLowerCase();

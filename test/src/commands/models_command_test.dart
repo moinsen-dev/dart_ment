@@ -40,9 +40,7 @@ void main() {
 
       expect(result, equals(ExitCode.config.code));
       verify(
-        () => logger.err(
-          any(that: contains('Gemini API key not found')),
-        ),
+        () => logger.err(any(that: contains('Gemini API key not found'))),
       ).called(1);
     });
   });

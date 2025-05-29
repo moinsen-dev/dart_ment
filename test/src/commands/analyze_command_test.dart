@@ -26,8 +26,10 @@ void main() {
       final command = AnalyzeCommand(logger: logger);
       expect(
         command.description,
-        equals('Analyze code quality and suggest improvements.\n'
-            'Usage: ment analyze [path]'),
+        equals(
+          'Analyze code quality and suggest improvements.\n'
+          'Usage: ment analyze [path]',
+        ),
       );
     });
 

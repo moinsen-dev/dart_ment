@@ -8,9 +8,7 @@ import 'package:mason_logger/mason_logger.dart';
 /// {@endtemplate}
 class ConfigCommand extends Command<int> {
   /// {@macro config_command}
-  ConfigCommand({
-    required Logger logger,
-  }) : _logger = logger {
+  ConfigCommand({required Logger logger}) : _logger = logger {
     argParser
       ..addCommand('show')
       ..addCommand('set')
@@ -58,8 +56,9 @@ class ConfigCommand extends Command<int> {
     );
     _logger.info('');
     _logger.info('To list and select models, use: ment models');
-    _logger
-        .info('To set a model directly, use: ment config set model <model-id>');
+    _logger.info(
+      'To set a model directly, use: ment config set model <model-id>',
+    );
 
     return ExitCode.success.code;
   }

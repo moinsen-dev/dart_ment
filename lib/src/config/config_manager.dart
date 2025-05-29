@@ -168,8 +168,9 @@ anthropic_api_key: ""
 
     if (keys.containsKey('gemini_api_key')) {
       lines.add('# Google Gemini API Key');
-      lines
-          .add('# Get your key from: https://makersuite.google.com/app/apikey');
+      lines.add(
+        '# Get your key from: https://makersuite.google.com/app/apikey',
+      );
       lines.add('gemini_api_key: "${keys['gemini_api_key']}"');
       lines.add('');
     }
@@ -258,12 +259,12 @@ anthropic_api_key: ""
   /// Quote YAML string if it contains special characters
   String _quoteYamlString(String value) {
     // Check if string needs quoting
-    if (value.contains('*') || 
-        value.contains('&') || 
-        value.contains('!') || 
-        value.contains('[') || 
-        value.contains(']') || 
-        value.contains('{') || 
+    if (value.contains('*') ||
+        value.contains('&') ||
+        value.contains('!') ||
+        value.contains('[') ||
+        value.contains(']') ||
+        value.contains('{') ||
         value.contains('}') ||
         value.contains(':') ||
         value.contains(',') ||
