@@ -1,0 +1,37 @@
+# dart_ment default configuration
+
+# LLM Settings
+llm:
+  # Google Gemini settings
+  gemini:
+    enabled: true
+    model: "gemini-pro"
+    temperature: 0.7
+    max_tokens: 2000
+
+  # Local LLM settings
+  local:
+    enabled: false
+    model_path: ""
+    context_size: 2048
+
+# Analysis Settings
+analysis:
+  include:
+    - lib/**
+    - bin/**
+    - test/**
+  exclude:
+    - "**/*.g.dart"
+    - "**/*.freezed.dart"
+
+# Fix Settings
+fixes:
+  backup: true
+  interactive: true
+  max_suggestions: 3
+
+# Logging Settings
+logging:
+  level: info
+  file: "dart_ment.log"

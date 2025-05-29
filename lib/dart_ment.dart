@@ -1,10 +1,16 @@
-/// dart_ment, A Very Good Project created by Very Good CLI.
+/// dart_ment, AI-powered automated code repair tool.
 ///
 /// ```sh
 /// # activate dart_ment
 /// dart pub global activate dart_ment
 ///
 /// # see usage
-/// dart_ment --help
+/// ment --help
 /// ```
-library;
+library dart_ment;
+
+export 'src/commands/commands.dart';
+export 'src/dart_ment.dart';
+export 'src/services/analyzer_service.dart';
+export 'src/services/gemini_service.dart';
+export 'src/utils/logger.dart';

@@ -6,9 +6,10 @@ import 'package:dart_ment/src/version.dart';
 import 'package:mason_logger/mason_logger.dart';
 import 'package:pub_updater/pub_updater.dart';
 
-const executableName = 'dart_ment';
+const executableName = 'ment';
 const packageName = 'dart_ment';
-const description = 'A Very Good Project created by Very Good CLI.';
+const description = 
+    'AI-powered automated code repair and refactoring tool for Dart.';
 
 /// {@template dart_ment_command_runner}
 /// A [CommandRunner] for the CLI.
@@ -39,6 +40,8 @@ class DartMentCommandRunner extends CompletionCommandRunner<int> {
       );
 
     // Add sub commands
+    addCommand(AnalyzeCommand(logger: _logger));
+    addCommand(FixCommand(logger: _logger));
     addCommand(SampleCommand(logger: _logger));
     addCommand(UpdateCommand(logger: _logger, pubUpdater: _pubUpdater));
   }
