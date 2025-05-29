@@ -35,9 +35,9 @@ void main() {
 
     test('handles missing API key', () async {
       when(() => logger.err(any())).thenReturn(null);
-      
+
       final result = await commandRunner.run(['models', '--list']);
-      
+
       expect(result, equals(ExitCode.config.code));
       verify(
         () => logger.err(

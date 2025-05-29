@@ -25,15 +25,61 @@ class AnalyzerService {
     List<String>? excludePaths,
   }) async {
     final dartFiles = <String>[];
-    final includes = includePaths ?? ['lib/**', 'bin/**', 'test/**'];
+    List<String> includes;
+    
+    // If no specific includes are provided, use defaults or scan entire directory
+    if (includePaths == null || includePaths.isEmpty) {
+      // Check if standard directories exist
+      final libDir = Directory(path.join(projectPath, 'lib'));
+      final binDir = Directory(path.join(projectPath, 'bin'));
+      final testDir = Directory(path.join(projectPath, 'test'));
+      
+      // Check if we're already in a subdirectory (lib, bin, test, etc)
+      final projectBasename = path.basename(projectPath);
+      final isInSubdir = ['lib', 'bin', 'test', 'src'].contains(projectBasename);
+      
+      if (isInSubdir) {
+        // If we're already in a subdirectory, scan from here
+        includes = ['**'];
+      } else if (libDir.existsSync() || binDir.existsSync() || testDir.existsSync()) {
+        // Use standard includes if any standard directory exists
+        includes = ['lib/**', 'bin/**', 'test/**'];
+      } else {
+        // Otherwise scan the entire directory
+        includes = ['**'];
+      }
+    } else {
+      includes = includePaths;
+    }
+    
     final excludes = excludePaths ?? ['**/*.g.dart', '**/*.freezed.dart'];
 
     for (final include in includes) {
-      final directory =
-          Directory(path.join(projectPath, include.split('/').first));
+      // Handle special case for current directory and recursive patterns
+      final Directory directory;
+      final bool recursive;
+      
+      if (include == '.' || include == '**') {
+        directory = Directory(projectPath);
+        recursive = include == '**';
+      } else if (include.contains('**')) {
+        // Handle patterns like 'lib/**'
+        final basePath = include.split('**').first.replaceAll('/', '');
+        if (basePath.isEmpty) {
+          directory = Directory(projectPath);
+        } else {
+          directory = Directory(path.join(projectPath, basePath));
+        }
+        recursive = true;
+      } else {
+        // Handle simple patterns
+        directory = Directory(path.join(projectPath, include.split('/').first));
+        recursive = include.contains('/');
+      }
+      
       if (!directory.existsSync()) continue;
-
-      await for (final entity in directory.list(recursive: true)) {
+      
+      await for (final entity in directory.list(recursive: recursive)) {
         if (entity is File && entity.path.endsWith('.dart')) {
           final relativePath = path.relative(entity.path, from: projectPath);
 
