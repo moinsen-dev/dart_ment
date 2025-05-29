@@ -5,6 +5,69 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.1] - 2025-05-29
+
+### Added
+- **Iterative Fix Logic**: Fix command now iterates up to a maximum number of times to fix all issues
+  - Default 3 iterations, configurable with `--max-iterations` flag
+  - Re-analyzes files after each iteration to catch remaining issues
+  - Shows progress for each iteration with remaining issue count
+- **Code Formatting**: Automatically formats fixed code using dart_style
+  - Ensures consistent formatting after AI fixes
+  - Gracefully handles formatting errors
+- **Apply Fixes in Analyze**: Added `--apply-fixes` flag to analyze command
+  - Automatically applies fixes after analysis completes
+  - Uses the same iterative fix logic as the fix command
+  - Convenient one-step analyze and fix workflow
+
+### Changed
+- **Improved Fix Progress**: Better progress reporting showing iterations and issue counts
+- **Backup Default**: Changed default backup setting to false (most users have version control)
+- **Dry Run Behavior**: In dry-run mode, only performs one iteration to show what would be fixed
+
+### Fixed
+- **Fix Command Efficiency**: Now properly handles cases where AI fixes may introduce new issues
+- **Progress Messages**: Clearer messaging about iteration progress and remaining issues
+
+## [0.2.0] - 2025-05-29
+
+### Added
+- **User Configuration Directory**: Created `~/.dart_ment/` directory for storing user configurations and API keys
+- **Model Selection**: Added support for selecting different AI models via `--model` flag
+- **Models Command**: New `ment models` command to list and select available Gemini models
+  - Interactive model selection with `ment models --select`
+  - Table view of available models with token limits
+  - Direct model setting with `ment models --set <model-id>`
+- **Configuration Manager**: Implemented centralized configuration management in user's home directory
+- **Config Command**: Added `ment config` command for managing settings and API keys
+- **API Key Security**: Secure storage of API keys in separate file with restrictive permissions (chmod 600)
+- **AI Response Parser**: Robust parsing of AI responses to handle various formatting styles
+- **Multiple Model Support**: Framework for supporting multiple AI providers (Gemini, OpenAI, Anthropic)
+- **Folder Argument Support**: Both `analyze` and `fix` commands now accept an optional directory path
+  - Example: `ment analyze lib/src` or `ment fix example`
+- **Progress Reporting**: Enhanced progress indicators showing file names and percentages during analysis
+- **Token Optimization**: Added `--all-files` flag to analyze command
+  - By default, only files with errors are sent to AI for suggestions (saves tokens)
+  - Use `--all-files` to analyze all files regardless of errors
+
+### Changed
+- **Configuration Location**: Moved from project-local config to user home directory for better usability
+- **API Key Management**: Improved API key handling with secure storage and multiple fallback options
+- **Error Messages**: Enhanced error messages for missing API keys with clear instructions
+- **Models Command Display**: Improved formatting with table layout and visual indicators for selected model
+- **Progress Display**: Now shows detailed progress with file paths and completion percentages
+- **Analyze Command Efficiency**: Two-phase analysis - first runs Dart analyzer, then only sends files with issues to AI
+
+### Fixed
+- **AI Response Formatting**: Fixed issue where AI responses with markdown code blocks were not properly parsed
+- **Test File Parsing**: Corrected handling of AI-generated fixes that included code fence markers
+- **Config Command Type Casting**: Fixed YamlMap to Map<String, dynamic> conversion errors
+- **API Key Loading**: Fixed analyze command not properly loading API keys from user configuration
+- **Linting Issues**: Resolved all linting warnings including null-to-bool conversions and async I/O operations
+
+### Removed
+- **Sample Command**: Removed the sample command as it was only for development reference and not needed by users
+
 ## [0.1.0] - 2025-05-29
 
 ### Added

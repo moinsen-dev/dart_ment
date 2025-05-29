@@ -2,6 +2,8 @@ import 'package:args/args.dart';
 import 'package:args/command_runner.dart';
 import 'package:cli_completion/cli_completion.dart';
 import 'package:dart_ment/src/commands/commands.dart';
+import 'package:dart_ment/src/commands/config_command.dart';
+import 'package:dart_ment/src/commands/models_command.dart';
 import 'package:dart_ment/src/version.dart';
 import 'package:mason_logger/mason_logger.dart';
 import 'package:pub_updater/pub_updater.dart';
@@ -41,8 +43,9 @@ class DartMentCommandRunner extends CompletionCommandRunner<int> {
 
     // Add sub commands
     addCommand(AnalyzeCommand(logger: _logger));
+    addCommand(ConfigCommand(logger: _logger));
     addCommand(FixCommand(logger: _logger));
-    addCommand(SampleCommand(logger: _logger));
+    addCommand(ModelsCommand(logger: _logger));
     addCommand(UpdateCommand(logger: _logger, pubUpdater: _pubUpdater));
   }
 

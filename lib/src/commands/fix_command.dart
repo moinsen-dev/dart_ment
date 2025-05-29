@@ -1,11 +1,13 @@
 import 'dart:io';
 
 import 'package:args/command_runner.dart';
+import 'package:dart_ment/src/config/config_manager.dart';
+import 'package:dart_ment/src/models/ai_models.dart';
 import 'package:dart_ment/src/services/analyzer_service.dart';
 import 'package:dart_ment/src/services/gemini_service.dart';
+import 'package:dart_style/dart_style.dart';
 import 'package:mason_logger/mason_logger.dart';
 import 'package:path/path.dart' as path;
-import 'package:yaml/yaml.dart';
 
 /// {@template fix_command}
 /// `ment fix` command that fixes linting issues using AI.
@@ -25,56 +27,123 @@ class FixCommand extends Command<int> {
         'api-key',
         help: 'Google Gemini API key',
       )
+      ..addOption(
+        'model',
+        abbr: 'm',
+        help: 'AI model to use for fixes',
+        defaultsTo: 'gemini-1.5-flash',
+        allowed: AIModel.availableModels
+            .where((m) => m.isSupported)
+            .map((m) => m.id)
+            .toList(),
+      )
       ..addFlag(
         'dry-run',
         help: 'Show fixes without applying them',
         negatable: false,
+      )
+      ..addOption(
+        'max-iterations',
+        help: 'Maximum number of fix iterations per file',
+        defaultsTo: '3',
       );
   }
 
   final Logger _logger;
 
   @override
-  String get description => 'Fix linting issues using AI assistance.';
+  String get description => 'Fix linting issues using AI assistance.\n'
+      'Usage: ment fix [path]';
 
   @override
   String get name => 'fix';
 
   @override
+  String get invocation => '$name [path]';
+
+  @override
   Future<int> run() async {
-    _logger.info('Starting fix process...');
+    // Get the target directory from positional argument or current directory
+    final targetPath =
+        (argResults?.rest.isNotEmpty ?? false) ? argResults!.rest.first : '.';
+
+    // Resolve the absolute path
+    final resolvedPath = path.isAbsolute(targetPath)
+        ? targetPath
+        : targetPath == '.'
+            ? Directory.current.path
+            : path.join(Directory.current.path, targetPath);
+
+    // Validate the path exists and is a directory
+    final targetDir = Directory(resolvedPath);
+    if (!targetDir.existsSync()) {
+      _logger.err('Error: Directory not found: $targetPath');
+      return ExitCode.usage.code;
+    }
+
+    final displayPath = targetPath == '.' ? '.' : path.relative(resolvedPath);
+    _logger.info('Starting fix process in $displayPath...');
 
     try {
-      // Load configuration
-      final config = await _loadConfiguration();
-      final llmConfig = config['llm'] as Map<String, dynamic>?;
-      final geminiConfig = llmConfig?['gemini'] as Map<String, dynamic>?;
+      // Initialize config manager
+      final configManager = ConfigManager();
+      await configManager.initialize();
+
+      // Load configurations
+      final config = await configManager.loadConfig();
+      final apiKeys = await configManager.loadApiKeys();
+
+      // Get model selection
+      final modelId = argResults?['model'] as String? ??
+          config['model'] as String? ??
+          AIModel.gemini15Flash.id;
+      final model = AIModel.fromId(modelId);
+
+      if (model == null || !model.isSupported) {
+        _logger.err('Unsupported model: $modelId');
+        _logger.info('Available models:');
+        for (final m in AIModel.availableModels.where((m) => m.isSupported)) {
+          _logger.info('  - ${m.id}: ${m.description}');
+        }
+        return ExitCode.config.code;
+      }
+
+      // Get API key
       final apiKey = argResults?['api-key'] as String? ??
-          geminiConfig?['api_key'] as String? ??
+          apiKeys[model.apiKeyName] ??
           Platform.environment['GEMINI_API_KEY'];
 
       if (apiKey == null || apiKey.isEmpty) {
         _logger.err(
-          'API key not found. Please provide it via --api-key flag, '
-          'config file, or GEMINI_API_KEY environment variable.',
+          'API key not found. Please provide it via:\n'
+          '  1. --api-key flag\n'
+          '  2. ${configManager.apiKeysFile.path}\n'
+          '  3. GEMINI_API_KEY environment variable',
         );
         return ExitCode.config.code;
       }
 
       // Initialize services
-      final geminiService = GeminiService(apiKey: apiKey)..initialize();
+      final geminiService = GeminiService(apiKey: apiKey, model: model)
+        ..initialize();
+
+      _logger.info('Using model: ${model.name}');
 
       final analyzerService = AnalyzerService(
-        projectPath: Directory.current.path,
+        projectPath: resolvedPath,
       );
       await analyzerService.initialize();
 
       // Get Dart files
       final progress = _logger.progress('Scanning for Dart files');
       final analysisConfig = config['analysis'] as Map<String, dynamic>?;
+
+      // If we're not analyzing the current directory, don't use config includes
+      final useConfigIncludes = targetPath == '.';
       final dartFiles = await analyzerService.getDartFiles(
-        includePaths:
-            (analysisConfig?['include'] as List<dynamic>?)?.cast<String>(),
+        includePaths: useConfigIncludes
+            ? (analysisConfig?['include'] as List<dynamic>?)?.cast<String>()
+            : null,
         excludePaths:
             (analysisConfig?['exclude'] as List<dynamic>?)?.cast<String>(),
       );
@@ -84,15 +153,32 @@ class FixCommand extends Command<int> {
       var totalIssues = 0;
       final filesWithIssues = <String, List<String>>{};
 
-      final analysisProgress = _logger.progress('Analyzing files');
-      for (final file in dartFiles) {
+      Progress? analysisProgress;
+      for (var i = 0; i < dartFiles.length; i++) {
+        final file = dartFiles[i];
+        final relativePath = path.relative(file, from: Directory.current.path);
+        final fileNum = i + 1;
+        final percentage =
+            ((fileNum / dartFiles.length) * 100).toStringAsFixed(1);
+
+        // Update progress with current file info
+        analysisProgress?.cancel();
+        final truncatedPath = relativePath.length > 50
+            ? '...${relativePath.substring(relativePath.length - 47)}'
+            : relativePath;
+        analysisProgress = _logger.progress(
+          'Analyzing files ($fileNum/${dartFiles.length} - $percentage%) '
+          '$truncatedPath',
+        );
+
         final errors = await analyzerService.analyzeFile(file);
         if (errors.isNotEmpty) {
           filesWithIssues[file] = errors.map((e) => e.message).toList();
           totalIssues += errors.length;
         }
       }
-      analysisProgress.complete(
+
+      analysisProgress?.complete(
         'Found $totalIssues issues in ${filesWithIssues.length} files',
       );
 
@@ -103,50 +189,131 @@ class FixCommand extends Command<int> {
 
       // Generate and apply fixes
       final isDryRun = argResults?['dry-run'] as bool? ?? false;
-      var fixedCount = 0;
+      final maxIterations = int.tryParse(
+            argResults?['max-iterations'] as String? ?? '3',
+          ) ??
+          3;
+      var totalFixedCount = 0;
+      var currentFileNum = 0;
+      final totalFiles = filesWithIssues.length;
+      
+      // Create DartFormatter instance
+      final formatter = DartFormatter(
+        languageVersion: DartFormatter.latestLanguageVersion,
+      );
 
       for (final entry in filesWithIssues.entries) {
         final filePath = entry.key;
-        final issues = entry.value;
-        final relativePath = path.relative(filePath);
+        final relativePath =
+            path.relative(filePath, from: Directory.current.path);
+        currentFileNum++;
 
-        _logger.info('\nProcessing $relativePath (${issues.length} issues)');
+        _logger.info(
+          '\n📄 Processing file $currentFileNum/$totalFiles: $relativePath',
+        );
 
-        final fileContent = await analyzerService.getFileContent(filePath);
+        // Iterate up to maxIterations to fix all issues
+        var fileContent = await analyzerService.getFileContent(filePath);
+        var iteration = 0;
+        var hasRemainingIssues = true;
 
-        for (final issue in issues) {
-          _logger.detail('  Issue: $issue');
-
-          final fixProgress = _logger.progress('  Generating fix...');
-          try {
-            final fixedCode = await geminiService.generateFix(
-              code: fileContent,
-              issue: issue,
-              filePath: relativePath,
-            );
-
-            if (fixedCode != null && fixedCode.isNotEmpty) {
-              fixProgress.complete('  Fix generated');
-
-              if (isDryRun) {
-                _logger.info('  [DRY RUN] Would apply fix');
-              } else {
-                // Backup original file if configured
-                final fixesConfig = config['fixes'] as Map<String, dynamic>?;
-                if (fixesConfig?['backup'] == true) {
-                  await File(filePath).copy('$filePath.backup');
-                }
-
-                // Apply fix
-                await File(filePath).writeAsString(fixedCode);
-                _logger.success('  Fix applied');
-                fixedCount++;
-              }
-            } else {
-              fixProgress.fail('  Could not generate fix');
+        while (hasRemainingIssues && iteration < maxIterations) {
+          iteration++;
+          
+          // Re-analyze the file to get current issues
+          final currentErrors = await analyzerService.analyzeFile(filePath);
+          if (currentErrors.isEmpty) {
+            hasRemainingIssues = false;
+            if (iteration > 1) {
+              _logger.success('  ✓ All issues fixed after $iteration iterations');
             }
-          } catch (e) {
-            fixProgress.fail('  Error: $e');
+            break;
+          }
+
+          final issues = currentErrors.map((e) => e.message).toList();
+          _logger.info(
+            '  Iteration $iteration/$maxIterations: '
+            '${issues.length} ${issues.length == 1 ? 'issue' : 'issues'} remaining',
+          );
+
+          var fixedInIteration = 0;
+          var issueNum = 0;
+
+          for (final issue in issues) {
+            issueNum++;
+            final issueProgress =
+                ((issueNum / issues.length) * 100).toStringAsFixed(0);
+
+            _logger.detail('    Issue $issueNum/${issues.length}: $issue');
+
+            final fixProgress = _logger.progress(
+              '    Generating fix ($issueProgress% of iteration)...',
+            );
+            try {
+              final fixedCode = await geminiService.generateFix(
+                code: fileContent,
+                issue: issue,
+                filePath: relativePath,
+              );
+
+              if (fixedCode != null && fixedCode.isNotEmpty) {
+                fixProgress.complete('    ✓ Fix generated');
+
+                if (isDryRun) {
+                  _logger.info('    [DRY RUN] Would apply fix');
+                  fixedInIteration++;
+                } else {
+                  // Apply fix and update file content for next iteration
+                  fileContent = fixedCode;
+                  _logger.success('    ✓ Fix applied');
+                  fixedInIteration++;
+                  totalFixedCount++;
+                }
+              } else {
+                fixProgress.fail('    ✗ Could not generate fix');
+              }
+            } catch (e) {
+              fixProgress.fail('    ✗ Error: $e');
+            }
+          }
+
+          // Write the updated content after all fixes in this iteration
+          if (!isDryRun && fixedInIteration > 0) {
+            try {
+              // Format the code before writing
+              final formattedCode = formatter.format(fileContent);
+              await File(filePath).writeAsString(formattedCode);
+              fileContent = formattedCode;
+              _logger.detail('  ✓ Code formatted and saved');
+            } catch (e) {
+              // If formatting fails, save without formatting
+              await File(filePath).writeAsString(fileContent);
+              _logger.detail('  ⚠️  Could not format code: $e');
+            }
+          }
+
+          // If no fixes were applied in this iteration, stop trying
+          if (fixedInIteration == 0) {
+            _logger.warn(
+              '  ⚠️  Could not fix remaining issues after $iteration iterations',
+            );
+            hasRemainingIssues = false;
+          }
+          
+          // In dry-run mode, only do one iteration
+          if (isDryRun) {
+            hasRemainingIssues = false;
+          }
+        }
+
+        // Final check if we hit max iterations
+        if (hasRemainingIssues && iteration >= maxIterations) {
+          final remainingErrors = await analyzerService.analyzeFile(filePath);
+          if (remainingErrors.isNotEmpty) {
+            _logger.warn(
+              '  ⚠️  Reached maximum iterations. '
+              '${remainingErrors.length} issues remaining.',
+            );
           }
         }
       }
@@ -155,7 +322,7 @@ class FixCommand extends Command<int> {
         _logger.info('\nDry run completed. No files were modified.');
       } else {
         _logger.success(
-          '\nFixed $fixedCount issues. '
+          '\nFixed $totalFixedCount issues. '
           'Run "dart analyze" to verify the fixes.',
         );
       }
@@ -165,24 +332,5 @@ class FixCommand extends Command<int> {
       _logger.err('Error while applying fixes: $e');
       return ExitCode.software.code;
     }
-  }
-
-  Future<Map<String, dynamic>> _loadConfiguration() async {
-    try {
-      final configPath = argResults?['config'] as String? ??
-          path.join(Directory.current.path, '.dart_ment.yaml');
-
-      final configFile = File(configPath);
-      if (configFile.existsSync()) {
-        final content = await configFile.readAsString();
-        final yaml = loadYaml(content);
-        return yaml is Map<String, dynamic> ? yaml : {};
-      }
-    } catch (e) {
-      _logger.detail('Could not load custom config: $e');
-    }
-
-    // Return empty config if no custom config found
-    return {};
   }
 }

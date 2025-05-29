@@ -93,7 +93,7 @@ Preview changes with `--dry-run` before applying them to your codebase
 <td>
 
 ### ⚡ Lightning Fast
-Analyzes and fixes hundreds of files in seconds
+Analyzes and fixes hundreds of files in seconds with smart token optimization
 
 </td>
 </tr>
@@ -108,6 +108,20 @@ Enforces consistent code style across your entire project
 
 ### 📊 Smart Suggestions
 Get improvement recommendations beyond just linting fixes
+
+</td>
+</tr>
+<tr>
+<td>
+
+### 📁 Flexible Targeting
+Analyze and fix specific directories without changing your working directory
+
+</td>
+<td>
+
+### 💰 Token Efficient
+Only analyzes files with errors by default, saving API costs
 
 </td>
 </tr>
@@ -146,7 +160,7 @@ dart pub global activate dart_ment
 
 ```yaml
 dev_dependencies:
-  dart_ment: ^0.1.0
+  dart_ment: ^0.2.0
 ```
 
 ## 💻 Usage
@@ -159,11 +173,21 @@ Get a comprehensive analysis of your codebase with AI-powered suggestions:
 # Basic analysis
 ment analyze
 
+# Analyze a specific directory
+ment analyze lib/src
+ment analyze example
+
 # With custom configuration
 ment analyze --config analysis_config.yaml
 
 # Disable AI suggestions (faster)
 ment analyze --no-suggestions
+
+# Analyze all files with AI (including files without errors)
+ment analyze --all-files
+
+# Analyze and automatically apply fixes
+ment analyze --apply-fixes
 ```
 
 ### 🛠️ Fix Issues Automatically
@@ -174,6 +198,10 @@ Let AI fix your linting issues intelligently:
 # Fix with API key as parameter
 ment fix --api-key YOUR_KEY
 
+# Fix issues in a specific directory
+ment fix lib
+ment fix test
+
 # Fix with environment variable
 export GEMINI_API_KEY=YOUR_KEY
 ment fix
@@ -181,8 +209,41 @@ ment fix
 # Preview fixes without applying
 ment fix --dry-run
 
-# Use custom config
-ment fix --config .dart_ment.yaml
+# Select a different AI model
+ment fix --model gemini-1.5-pro
+
+# Set maximum fix iterations (default: 3)
+ment fix --max-iterations 5
+```
+
+### 🤖 Manage AI Models
+
+List and select from available Gemini models:
+
+```bash
+# List all available models
+ment models --list
+
+# Select a model interactively
+ment models --select
+
+# Set a specific model
+ment models --set gemini-1.5-pro
+```
+
+### ⚙️ Configuration Management
+
+Manage your dart_ment configuration:
+
+```bash
+# Show current configuration
+ment config show
+
+# Set configuration values
+ment config set model gemini-1.5-flash
+
+# Show configuration file paths
+ment config path
 ```
 
 ### 🔄 Update dart_ment
@@ -195,37 +256,41 @@ ment update
 
 ## ⚙️ Configuration
 
-### 1. Environment Variable (Simplest)
+dart_ment stores configuration in your home directory at `~/.dart_ment/` for easy access across all projects.
+
+### 1. API Key Setup
+
+Set your Gemini API key using one of these methods:
 
 ```bash
+# Option 1: Using config command (stored securely)
+ment config set gemini_api_key YOUR_API_KEY
+
+# Option 2: Environment variable
 export GEMINI_API_KEY=your_api_key_here
+
+# Option 3: Edit ~/.dart_ment/api_keys.yaml directly
 ```
 
 ### 2. Configuration File
 
-Create `.dart_ment.yaml` in your project root:
+Configuration is stored at `~/.dart_ment/config.yaml`:
 
 ```yaml
-# AI Configuration
-llm:
-  gemini:
-    api_key: YOUR_API_KEY # Can also use env var
-    model: "gemini-pro"
-    temperature: 0.7
-    max_tokens: 2000
+# Default AI model
+model: gemini-1.5-flash
 
 # Analysis Settings
 analysis:
   include:
-    - lib/**
-    - bin/**
-    - test/**
+    - lib/**/*.dart
+    - bin/**/*.dart
+    - test/**/*.dart
   exclude:
     - "**/*.g.dart"
     - "**/*.freezed.dart"
-    - "**/generated/**"
 
-# Fix Behavior
+# Fix Settings
 fixes:
   backup: true          # Create .backup files
   interactive: false    # Auto-apply fixes
@@ -275,10 +340,25 @@ dart test
 # Make your changes and submit a PR!
 ```
 
+### 🚀 Releasing
+
+New releases are automatically created when version tags are pushed:
+
+```bash
+# Tag a new version
+git tag v0.1.0
+git push origin v0.1.0
+```
+
+This will automatically:
+- Create a GitHub release with changelog
+- Publish to pub.dev (if credentials are configured)
+
+See [.github/workflows/README.md](.github/workflows/README.md) for details.
+
 ## 📊 Roadmap
 
 - [ ] VS Code Extension
-- [ ] IntelliJ Plugin
 - [ ] Custom Lint Rules
 - [ ] Team Style Guides
 - [ ] Local LLM Support
