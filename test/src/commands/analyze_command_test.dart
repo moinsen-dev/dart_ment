@@ -54,5 +54,21 @@ void main() {
       expect(argParser.options['suggestions']!.abbr, equals('s'));
       expect(argParser.options['suggestions']!.defaultsTo, isTrue);
     });
+
+    test('accepts apply-fixes flag', () async {
+      final command = AnalyzeCommand(logger: logger);
+      final argParser = command.argParser;
+
+      expect(argParser.options.containsKey('apply-fixes'), isTrue);
+      expect(argParser.options['apply-fixes']!.negatable, isFalse);
+    });
+
+    test('accepts all-files flag', () async {
+      final command = AnalyzeCommand(logger: logger);
+      final argParser = command.argParser;
+
+      expect(argParser.options.containsKey('all-files'), isTrue);
+      expect(argParser.options['all-files']!.negatable, isFalse);
+    });
   });
 }

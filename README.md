@@ -185,6 +185,9 @@ ment analyze --no-suggestions
 
 # Analyze all files with AI (including files without errors)
 ment analyze --all-files
+
+# Analyze and automatically apply fixes
+ment analyze --apply-fixes
 ```
 
 ### 🛠️ Fix Issues Automatically
