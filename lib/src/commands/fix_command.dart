@@ -1,11 +1,12 @@
 import 'dart:io';
 
 import 'package:args/command_runner.dart';
+import 'package:dart_ment/src/config/config_manager.dart';
+import 'package:dart_ment/src/models/ai_models.dart';
 import 'package:dart_ment/src/services/analyzer_service.dart';
 import 'package:dart_ment/src/services/gemini_service.dart';
 import 'package:mason_logger/mason_logger.dart';
 import 'package:path/path.dart' as path;
-import 'package:yaml/yaml.dart';
 
 /// {@template fix_command}
 /// `ment fix` command that fixes linting issues using AI.
@@ -24,6 +25,16 @@ class FixCommand extends Command<int> {
       ..addOption(
         'api-key',
         help: 'Google Gemini API key',
+      )
+      ..addOption(
+        'model',
+        abbr: 'm',
+        help: 'AI model to use for fixes',
+        defaultsTo: 'gemini-1.5-flash',
+        allowed: AIModel.availableModels
+            .where((m) => m.isSupported)
+            .map((m) => m.id)
+            .toList(),
       )
       ..addFlag(
         'dry-run',
@@ -45,24 +56,49 @@ class FixCommand extends Command<int> {
     _logger.info('Starting fix process...');
 
     try {
-      // Load configuration
-      final config = await _loadConfiguration();
-      final llmConfig = config['llm'] as Map<String, dynamic>?;
-      final geminiConfig = llmConfig?['gemini'] as Map<String, dynamic>?;
+      // Initialize config manager
+      final configManager = ConfigManager();
+      await configManager.initialize();
+      
+      // Load configurations
+      final config = await configManager.loadConfig();
+      final apiKeys = await configManager.loadApiKeys();
+      
+      // Get model selection
+      final modelId = argResults?['model'] as String? ?? 
+          config['model'] as String? ?? 
+          AIModel.gemini15Flash.id;
+      final model = AIModel.fromId(modelId);
+      
+      if (model == null || !model.isSupported) {
+        _logger.err('Unsupported model: $modelId');
+        _logger.info('Available models:');
+        for (final m in AIModel.availableModels.where((m) => m.isSupported)) {
+          _logger.info('  - ${m.id}: ${m.description}');
+        }
+        return ExitCode.config.code;
+      }
+      
+      // Get API key
       final apiKey = argResults?['api-key'] as String? ??
-          geminiConfig?['api_key'] as String? ??
+          apiKeys[model.apiKeyName] ??
           Platform.environment['GEMINI_API_KEY'];
 
       if (apiKey == null || apiKey.isEmpty) {
         _logger.err(
-          'API key not found. Please provide it via --api-key flag, '
-          'config file, or GEMINI_API_KEY environment variable.',
+          'API key not found. Please provide it via:\n'
+          '  1. --api-key flag\n'
+          '  2. ${configManager.apiKeysFile.path}\n'
+          '  3. GEMINI_API_KEY environment variable',
         );
         return ExitCode.config.code;
       }
 
       // Initialize services
-      final geminiService = GeminiService(apiKey: apiKey)..initialize();
+      final geminiService = GeminiService(apiKey: apiKey, model: model)
+        ..initialize();
+      
+      _logger.info('Using model: ${model.name}');
 
       final analyzerService = AnalyzerService(
         projectPath: Directory.current.path,
@@ -167,22 +203,4 @@ class FixCommand extends Command<int> {
     }
   }
 
-  Future<Map<String, dynamic>> _loadConfiguration() async {
-    try {
-      final configPath = argResults?['config'] as String? ??
-          path.join(Directory.current.path, '.dart_ment.yaml');
-
-      final configFile = File(configPath);
-      if (configFile.existsSync()) {
-        final content = await configFile.readAsString();
-        final yaml = loadYaml(content);
-        return yaml is Map<String, dynamic> ? yaml : {};
-      }
-    } catch (e) {
-      _logger.detail('Could not load custom config: $e');
-    }
-
-    // Return empty config if no custom config found
-    return {};
-  }
 }

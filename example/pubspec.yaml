@@ -1,0 +1,14 @@
+name: dart_ment_example
+description: Example files for testing dart_ment fixes
+version: 1.0.0
+publish_to: none
+
+environment:
+  sdk: ^3.0.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+dev_dependencies:
+  flutter_lints: ^2.0.0

@@ -1,10 +1,13 @@
+import 'package:dart_ment/src/models/ai_models.dart';
+import 'package:dart_ment/src/utils/ai_response_parser.dart';
 import 'package:flutter_gemini/flutter_gemini.dart';
 
 /// Service for interacting with Google Gemini AI
 class GeminiService {
-  GeminiService({required this.apiKey});
+  GeminiService({required this.apiKey, this.model});
 
   final String apiKey;
+  final AIModel? model;
 
   /// Initialize the Gemini service
   void initialize() {
@@ -28,7 +31,7 @@ Code:
 $code
 ```
 
-Provide only the fixed code without explanations. The code should be properly formatted and follow Dart best practices.
+IMPORTANT: Return ONLY the fixed Dart code without any markdown formatting, code fences, or explanations. Do not include ```dart or ``` in your response. The response should be valid Dart code that can be directly written to a file.
 ''';
 
     try {
@@ -36,9 +39,13 @@ Provide only the fixed code without explanations. The code should be properly fo
         parts: [
           Part.text(prompt),
         ],
+        model: model?.id,
       );
 
-      return response?.output;
+      if (response?.output == null) return null;
+
+      // Use AIResponseParser to extract clean code
+      return AIResponseParser.extractCode(response!.output!);
     } catch (e) {
       throw Exception('Failed to generate fix: $e');
     }
@@ -67,6 +74,7 @@ Provide a list of specific, actionable suggestions to improve code quality, perf
         parts: [
           Part.text(prompt),
         ],
+        model: model?.id,
       );
 
       if (response?.output == null) return [];
@@ -86,4 +94,5 @@ Provide a list of specific, actionable suggestions to improve code quality, perf
       throw Exception('Failed to analyze code: $e');
     }
   }
+
 }
