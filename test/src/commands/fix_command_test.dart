@@ -34,8 +34,10 @@ void main() {
       final command = FixCommand(logger: logger);
       expect(
         command.description,
-        equals('Fix linting issues using AI assistance.\n'
-            'Usage: ment fix [path]'),
+        equals(
+          'Fix linting issues using AI assistance.\n'
+          'Usage: ment fix [path]',
+        ),
       );
     });
 

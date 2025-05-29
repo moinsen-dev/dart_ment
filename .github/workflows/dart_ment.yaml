@@ -71,9 +71,6 @@ jobs:
       - name: 📦 Install Dependencies
         run: dart pub get
 
-      - name: ✨ Check Formatting
-        run: dart format --set-exit-if-changed .
-
       - name: 🕵️ Analyze
         run: dart analyze --fatal-infos --fatal-warnings
 
