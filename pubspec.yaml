@@ -1,7 +1,7 @@
 name: dart_ment
 description: AI-powered automated code repair and refactoring tool for Dart.
 version: 0.1.0
-repository: https://github.com/yourusername/dart_ment
+repository: https://github.com/moinsen-dev/dart_ment
 
 environment:
   sdk: ^3.5.0
