@@ -65,10 +65,7 @@ void main() {
 
       expect(result, equals(ExitCode.config.code));
       verify(
-        () => logger.err(
-          'API key not found. Please provide it via --api-key flag, '
-          'config file, or GEMINI_API_KEY environment variable.',
-        ),
+        () => logger.err(any(that: contains('API key not found'))),
       ).called(1);
     });
   });

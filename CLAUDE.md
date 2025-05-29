@@ -63,7 +63,6 @@ dart pub global activate --source path .
 - `ment config` - Manage configuration settings and API keys
 - `ment fix` - Fix linting issues using AI (supports --model flag for model selection)
 - `ment models` - List and select available AI models from Gemini API
-- `ment sample` - Sample command from template (for development reference)
 - `ment update` - Check for CLI updates
 
 ## Architecture

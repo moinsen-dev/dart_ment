@@ -46,7 +46,6 @@ class DartMentCommandRunner extends CompletionCommandRunner<int> {
     addCommand(ConfigCommand(logger: _logger));
     addCommand(FixCommand(logger: _logger));
     addCommand(ModelsCommand(logger: _logger));
-    addCommand(SampleCommand(logger: _logger));
     addCommand(UpdateCommand(logger: _logger, pubUpdater: _pubUpdater));
   }
 

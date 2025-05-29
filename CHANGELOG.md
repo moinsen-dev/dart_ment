@@ -26,6 +26,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **AI Response Formatting**: Fixed issue where AI responses with markdown code blocks were not properly parsed
 - **Test File Parsing**: Corrected handling of AI-generated fixes that included code fence markers
 
+### Removed
+- **Sample Command**: Removed the sample command as it was only for development reference and not needed by users
+
 ## [0.1.0] - 2025-05-29
 
 ### Added
