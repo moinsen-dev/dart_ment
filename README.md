@@ -214,7 +214,7 @@ llm:
     temperature: 0.7
     max_tokens: 2000
 
-# Analysis Settings  
+# Analysis Settings
 analysis:
   include:
     - lib/**
@@ -278,7 +278,7 @@ dart test
 ## 📊 Roadmap
 
 - [ ] VS Code Extension
-- [ ] IntelliJ Plugin  
+- [ ] IntelliJ Plugin
 - [ ] Custom Lint Rules
 - [ ] Team Style Guides
 - [ ] Local LLM Support
@@ -324,7 +324,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 **Made with 💙 by the Dart community**
 
-[Report Bug](https://github.com/yourusername/dart_ment/issues) • [Request Feature](https://github.com/yourusername/dart_ment/issues)
+[Report Bug](https://github.com/moinsen-dev/dart_ment/issues) • [Request Feature](https://github.com/moinsen-dev/dart_ment/issues)
 
 </div>
 
