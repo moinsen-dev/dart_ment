@@ -15,6 +15,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Code Formatting**: Automatically formats fixed code using dart_style
   - Ensures consistent formatting after AI fixes
   - Gracefully handles formatting errors
+- **Apply Fixes in Analyze**: Added `--apply-fixes` flag to analyze command
+  - Automatically applies fixes after analysis completes
+  - Uses the same iterative fix logic as the fix command
+  - Convenient one-step analyze and fix workflow
 
 ### Changed
 - **Improved Fix Progress**: Better progress reporting showing iterations and issue counts

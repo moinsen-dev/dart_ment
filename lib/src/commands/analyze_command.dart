@@ -5,6 +5,7 @@ import 'package:dart_ment/src/config/config_manager.dart';
 import 'package:dart_ment/src/models/ai_models.dart';
 import 'package:dart_ment/src/services/analyzer_service.dart';
 import 'package:dart_ment/src/services/gemini_service.dart';
+import 'package:dart_style/dart_style.dart';
 import 'package:mason_logger/mason_logger.dart';
 import 'package:path/path.dart' as path;
 
@@ -46,6 +47,11 @@ class AnalyzeCommand extends Command<int> {
         'all-files',
         help:
             'Generate AI suggestions for all files, not just those with issues',
+        negatable: false,
+      )
+      ..addFlag(
+        'apply-fixes',
+        help: 'Automatically apply fixes for found issues after analysis',
         negatable: false,
       );
   }
@@ -304,9 +310,29 @@ class AnalyzeCommand extends Command<int> {
           ..detail('  Total suggestions: $totalSuggestions');
 
         if (totalIssues > 0) {
-          _logger.info(
-            '\nRun "ment fix" to automatically fix these issues.',
-          );
+          final shouldApplyFixes = argResults?['apply-fixes'] as bool? ?? false;
+          
+          if (shouldApplyFixes) {
+            if (geminiService == null) {
+              _logger.err(
+                '\nCannot apply fixes: AI service not initialized. '
+                'Please provide an API key.',
+              );
+            } else {
+              _logger.info('\n🛠️  Applying fixes...');
+              await _applyFixes(
+                filesWithIssues: filesWithIssues,
+                fileErrors: fileErrors,
+                geminiService: geminiService,
+                analyzerService: analyzerService,
+                resolvedPath: resolvedPath,
+              );
+            }
+          } else {
+            _logger.info(
+              '\nRun "ment fix" to automatically fix these issues.',
+            );
+          }
         }
       }
 
@@ -315,6 +341,129 @@ class AnalyzeCommand extends Command<int> {
       _logger.err('Error during analysis: $e');
       return ExitCode.software.code;
     }
+  }
+  /// Apply fixes to files with issues
+  Future<void> _applyFixes({
+    required Map<String, List<String>> filesWithIssues,
+    required Map<String, List<dynamic>> fileErrors,
+    required GeminiService geminiService,
+    required AnalyzerService analyzerService,
+    required String resolvedPath,
+  }) async {
+    const maxIterations = 3;
+    var totalFixedCount = 0;
+    var currentFileNum = 0;
+    final totalFiles = filesWithIssues.length;
+    
+    // Create DartFormatter instance
+    final formatter = DartFormatter(
+      languageVersion: DartFormatter.latestLanguageVersion,
+    );
+
+    for (final entry in filesWithIssues.entries) {
+      final filePath = entry.key;
+      final relativePath =
+          path.relative(filePath, from: Directory.current.path);
+      currentFileNum++;
+
+      _logger.info(
+        '\n📄 Fixing file $currentFileNum/$totalFiles: $relativePath',
+      );
+
+      // Iterate up to maxIterations to fix all issues
+      var fileContent = await analyzerService.getFileContent(filePath);
+      var iteration = 0;
+      var hasRemainingIssues = true;
+
+      while (hasRemainingIssues && iteration < maxIterations) {
+        iteration++;
+        
+        // Re-analyze the file to get current issues
+        final currentErrors = await analyzerService.analyzeFile(filePath);
+        if (currentErrors.isEmpty) {
+          hasRemainingIssues = false;
+          if (iteration > 1) {
+            _logger.success('  ✓ All issues fixed after $iteration iterations');
+          } else {
+            _logger.success('  ✓ All issues fixed');
+          }
+          break;
+        }
+
+        final issues = currentErrors.map((e) => e.message).toList();
+        if (iteration > 1) {
+          _logger.info(
+            '  Iteration $iteration/$maxIterations: '
+            '${issues.length} ${issues.length == 1 ? 'issue' : 'issues'} remaining',
+          );
+        }
+
+        var fixedInIteration = 0;
+
+        for (final issue in issues) {
+          final fixProgress = _logger.progress(
+            '  Generating fix...',
+          );
+          try {
+            final fixedCode = await geminiService.generateFix(
+              code: fileContent,
+              issue: issue,
+              filePath: relativePath,
+            );
+
+            if (fixedCode != null && fixedCode.isNotEmpty) {
+              fixProgress.complete('  ✓ Fix generated');
+              // Apply fix and update file content for next iteration
+              fileContent = fixedCode;
+              fixedInIteration++;
+              totalFixedCount++;
+            } else {
+              fixProgress.fail('  ✗ Could not generate fix');
+            }
+          } catch (e) {
+            fixProgress.fail('  ✗ Error: $e');
+          }
+        }
+
+        // Write the updated content after all fixes in this iteration
+        if (fixedInIteration > 0) {
+          try {
+            // Format the code before writing
+            final formattedCode = formatter.format(fileContent);
+            await File(filePath).writeAsString(formattedCode);
+            fileContent = formattedCode;
+          } catch (e) {
+            // If formatting fails, save without formatting
+            await File(filePath).writeAsString(fileContent);
+            _logger.detail('  ⚠️  Could not format code: $e');
+          }
+        }
+
+        // If no fixes were applied in this iteration, stop trying
+        if (fixedInIteration == 0) {
+          _logger.warn(
+            '  ⚠️  Could not fix remaining issues',
+          );
+          hasRemainingIssues = false;
+        }
+      }
+
+      // Final check if we hit max iterations
+      if (hasRemainingIssues && iteration >= maxIterations) {
+        final remainingErrors = await analyzerService.analyzeFile(filePath);
+        if (remainingErrors.isNotEmpty) {
+          _logger.warn(
+            '  ⚠️  Reached maximum iterations. '
+            '${remainingErrors.length} issues remaining.',
+          );
+        }
+      }
+    }
+
+    _logger.success(
+      '\n✅ Fixed $totalFixedCount issues. '
+      'Run "dart analyze" to verify the fixes.',
+    );
   }
 }
 
