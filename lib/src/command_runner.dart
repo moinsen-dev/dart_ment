@@ -8,7 +8,7 @@ import 'package:pub_updater/pub_updater.dart';
 
 const executableName = 'ment';
 const packageName = 'dart_ment';
-const description = 
+const description =
     'AI-powered automated code repair and refactoring tool for Dart.';
 
 /// {@template dart_ment_command_runner}

@@ -33,7 +33,7 @@ void main() {
     test('accepts config option', () async {
       final command = AnalyzeCommand(logger: logger);
       final argParser = command.argParser;
-      
+
       expect(argParser.options.containsKey('config'), isTrue);
       expect(argParser.options['config']!.abbr, equals('c'));
     });
@@ -41,14 +41,14 @@ void main() {
     test('accepts api-key option', () async {
       final command = AnalyzeCommand(logger: logger);
       final argParser = command.argParser;
-      
+
       expect(argParser.options.containsKey('api-key'), isTrue);
     });
 
     test('accepts suggestions flag', () async {
       final command = AnalyzeCommand(logger: logger);
       final argParser = command.argParser;
-      
+
       expect(argParser.options.containsKey('suggestions'), isTrue);
       expect(argParser.options['suggestions']!.abbr, equals('s'));
       expect(argParser.options['suggestions']!.defaultsTo, isTrue);

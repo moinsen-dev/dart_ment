@@ -37,7 +37,7 @@ void main() {
     test('accepts config option', () async {
       final command = FixCommand(logger: logger);
       final argParser = command.argParser;
-      
+
       expect(argParser.options.containsKey('config'), isTrue);
       expect(argParser.options['config']!.abbr, equals('c'));
     });
@@ -45,14 +45,14 @@ void main() {
     test('accepts api-key option', () async {
       final command = FixCommand(logger: logger);
       final argParser = command.argParser;
-      
+
       expect(argParser.options.containsKey('api-key'), isTrue);
     });
 
     test('accepts dry-run flag', () async {
       final command = FixCommand(logger: logger);
       final argParser = command.argParser;
-      
+
       expect(argParser.options.containsKey('dry-run'), isTrue);
       expect(argParser.options['dry-run']!.negatable, isFalse);
     });
@@ -60,9 +60,9 @@ void main() {
     test('requires API key', () async {
       when(() => logger.info(any())).thenReturn(null);
       when(() => logger.err(any())).thenReturn(null);
-      
+
       final result = await commandRunner.run(['fix']);
-      
+
       expect(result, equals(ExitCode.config.code));
       verify(
         () => logger.err(
