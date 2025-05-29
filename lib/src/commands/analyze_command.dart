@@ -14,19 +14,10 @@ import 'package:path/path.dart' as path;
 /// {@endtemplate}
 class AnalyzeCommand extends Command<int> {
   /// {@macro analyze_command}
-  AnalyzeCommand({
-    required Logger logger,
-  }) : _logger = logger {
+  AnalyzeCommand({required Logger logger}) : _logger = logger {
     argParser
-      ..addOption(
-        'config',
-        abbr: 'c',
-        help: 'Path to configuration file',
-      )
-      ..addOption(
-        'api-key',
-        help: 'Google Gemini API key',
-      )
+      ..addOption('config', abbr: 'c', help: 'Path to configuration file')
+      ..addOption('api-key', help: 'Google Gemini API key')
       ..addOption(
         'model',
         abbr: 'm',
@@ -59,7 +50,8 @@ class AnalyzeCommand extends Command<int> {
   final Logger _logger;
 
   @override
-  String get description => 'Analyze code quality and suggest improvements.\n'
+  String get description =>
+      'Analyze code quality and suggest improvements.\n'
       'Usage: ment analyze [path]';
 
   @override
@@ -71,15 +63,16 @@ class AnalyzeCommand extends Command<int> {
   @override
   Future<int> run() async {
     // Get the target directory from positional argument or current directory
-    final targetPath =
-        (argResults?.rest.isNotEmpty ?? false) ? argResults!.rest.first : '.';
+    final targetPath = (argResults?.rest.isNotEmpty ?? false)
+        ? argResults!.rest.first
+        : '.';
 
     // Resolve the absolute path
     final resolvedPath = path.isAbsolute(targetPath)
         ? targetPath
         : targetPath == '.'
-            ? Directory.current.path
-            : path.join(Directory.current.path, targetPath);
+        ? Directory.current.path
+        : path.join(Directory.current.path, targetPath);
 
     // Validate the path exists and is a directory
     final targetDir = Directory(resolvedPath);
@@ -107,13 +100,15 @@ class AnalyzeCommand extends Command<int> {
       GeminiService? geminiService;
       if (shouldGenerateSuggestions) {
         // Get model selection
-        final modelId = argResults?['model'] as String? ??
+        final modelId =
+            argResults?['model'] as String? ??
             config['model'] as String? ??
             AIModel.gemini15Flash.id;
         final model = AIModel.fromId(modelId);
 
         // Get API key
-        final apiKey = argResults?['api-key'] as String? ??
+        final apiKey =
+            argResults?['api-key'] as String? ??
             apiKeys['gemini_api_key'] ??
             Platform.environment['GEMINI_API_KEY'];
 
@@ -135,9 +130,7 @@ class AnalyzeCommand extends Command<int> {
       }
 
       // Initialize analyzer with the target directory
-      final analyzerService = AnalyzerService(
-        projectPath: resolvedPath,
-      );
+      final analyzerService = AnalyzerService(projectPath: resolvedPath);
       await analyzerService.initialize();
 
       // Get Dart files
@@ -150,8 +143,8 @@ class AnalyzeCommand extends Command<int> {
         includePaths: useConfigIncludes
             ? (analysisConfig?['include'] as List<dynamic>?)?.cast<String>()
             : null,
-        excludePaths:
-            (analysisConfig?['exclude'] as List<dynamic>?)?.cast<String>(),
+        excludePaths: (analysisConfig?['exclude'] as List<dynamic>?)
+            ?.cast<String>(),
       );
       progress.complete('Found ${dartFiles.length} Dart files');
 
@@ -165,8 +158,9 @@ class AnalyzeCommand extends Command<int> {
         final file = dartFiles[i];
         final relativePath = path.relative(file, from: Directory.current.path);
         final fileNum = i + 1;
-        final percentage =
-            ((fileNum / dartFiles.length) * 100).toStringAsFixed(1);
+        final percentage = ((fileNum / dartFiles.length) * 100).toStringAsFixed(
+          1,
+        );
 
         // Update progress with current file info
         analysisProgress?.cancel();
@@ -196,8 +190,9 @@ class AnalyzeCommand extends Command<int> {
 
       if (geminiService != null && shouldGenerateSuggestions) {
         // Determine which files to analyze with AI
-        final filesToAnalyze =
-            analyzeAllFiles ? dartFiles : filesWithIssues.keys.toList();
+        final filesToAnalyze = analyzeAllFiles
+            ? dartFiles
+            : filesWithIssues.keys.toList();
 
         if (filesToAnalyze.isNotEmpty) {
           _logger.info('');
@@ -205,12 +200,14 @@ class AnalyzeCommand extends Command<int> {
           var fileNum = 0;
 
           for (final file in filesToAnalyze) {
-            final relativePath =
-                path.relative(file, from: Directory.current.path);
+            final relativePath = path.relative(
+              file,
+              from: Directory.current.path,
+            );
             final issues = filesWithIssues[file] ?? [];
             fileNum++;
-            final percentage =
-                ((fileNum / filesToAnalyze.length) * 100).toStringAsFixed(1);
+            final percentage = ((fileNum / filesToAnalyze.length) * 100)
+                .toStringAsFixed(1);
 
             suggestionProgress?.cancel();
             final truncatedPath = relativePath.length > 40
@@ -263,8 +260,10 @@ class AnalyzeCommand extends Command<int> {
         for (final entry in filesWithIssues.entries) {
           final file = entry.key;
           final issues = entry.value;
-          final relativePath =
-              path.relative(file, from: Directory.current.path);
+          final relativePath = path.relative(
+            file,
+            from: Directory.current.path,
+          );
 
           results.add(
             _AnalysisResult(
@@ -329,9 +328,7 @@ class AnalyzeCommand extends Command<int> {
               );
             }
           } else {
-            _logger.info(
-              '\nRun "ment fix" to automatically fix these issues.',
-            );
+            _logger.info('\nRun "ment fix" to automatically fix these issues.');
           }
         }
       }
@@ -363,8 +360,10 @@ class AnalyzeCommand extends Command<int> {
 
     for (final entry in filesWithIssues.entries) {
       final filePath = entry.key;
-      final relativePath =
-          path.relative(filePath, from: Directory.current.path);
+      final relativePath = path.relative(
+        filePath,
+        from: Directory.current.path,
+      );
       currentFileNum++;
 
       _logger.info(
@@ -402,9 +401,7 @@ class AnalyzeCommand extends Command<int> {
         var fixedInIteration = 0;
 
         for (final issue in issues) {
-          final fixProgress = _logger.progress(
-            '  Generating fix...',
-          );
+          final fixProgress = _logger.progress('  Generating fix...');
           try {
             final fixedCode = await geminiService.generateFix(
               code: fileContent,
@@ -442,9 +439,7 @@ class AnalyzeCommand extends Command<int> {
 
         // If no fixes were applied in this iteration, stop trying
         if (fixedInIteration == 0) {
-          _logger.warn(
-            '  ⚠️  Could not fix remaining issues',
-          );
+          _logger.warn('  ⚠️  Could not fix remaining issues');
           hasRemainingIssues = false;
         }
       }

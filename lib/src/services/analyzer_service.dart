@@ -14,9 +14,7 @@ class AnalyzerService {
 
   /// Initialize the analyzer
   Future<void> initialize() async {
-    _collection = AnalysisContextCollection(
-      includedPaths: [projectPath],
-    );
+    _collection = AnalysisContextCollection(includedPaths: [projectPath]);
   }
 
   /// Get all Dart files in the project
@@ -36,8 +34,12 @@ class AnalyzerService {
 
       // Check if we're already in a subdirectory (lib, bin, test, etc)
       final projectBasename = path.basename(projectPath);
-      final isInSubdir =
-          ['lib', 'bin', 'test', 'src'].contains(projectBasename);
+      final isInSubdir = [
+        'lib',
+        'bin',
+        'test',
+        'src',
+      ].contains(projectBasename);
 
       if (isInSubdir) {
         // If we're already in a subdirectory, scan from here
@@ -143,8 +145,9 @@ class AnalyzerService {
       final parts = pattern.split('**');
       if (parts.length == 2) {
         final prefix = parts[0];
-        final suffix =
-            parts[1].startsWith('/') ? parts[1].substring(1) : parts[1];
+        final suffix = parts[1].startsWith('/')
+            ? parts[1].substring(1)
+            : parts[1];
         return filePath.startsWith(prefix) && filePath.endsWith(suffix);
       }
     }

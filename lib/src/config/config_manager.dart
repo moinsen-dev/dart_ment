@@ -168,8 +168,9 @@ anthropic_api_key: ""
 
     if (keys.containsKey('gemini_api_key')) {
       lines.add('# Google Gemini API Key');
-      lines
-          .add('# Get your key from: https://makersuite.google.com/app/apikey');
+      lines.add(
+        '# Get your key from: https://makersuite.google.com/app/apikey',
+      );
       lines.add('gemini_api_key: "${keys['gemini_api_key']}"');
       lines.add('');
     }

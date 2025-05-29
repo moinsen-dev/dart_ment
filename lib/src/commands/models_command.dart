@@ -43,9 +43,7 @@ class _ModelInfo {
 /// {@endtemplate}
 class ModelsCommand extends Command<int> {
   /// {@macro models_command}
-  ModelsCommand({
-    required Logger logger,
-  }) : _logger = logger {
+  ModelsCommand({required Logger logger}) : _logger = logger {
     argParser
       ..addFlag(
         'list',
@@ -116,15 +114,16 @@ class ModelsCommand extends Command<int> {
 
   /// Fetch models from Gemini API
   Future<List<_ModelInfo>> _fetchModels() async {
-    final url =
-        Uri.parse('https://generativelanguage.googleapis.com/v1beta/models')
-            .replace(queryParameters: {'key': _apiKey});
+    final url = Uri.parse(
+      'https://generativelanguage.googleapis.com/v1beta/models',
+    ).replace(queryParameters: {'key': _apiKey});
 
     final response = await http.get(url);
 
     if (response.statusCode != 200) {
       throw Exception(
-          'Failed to fetch models: ${response.statusCode} - ${response.body}');
+        'Failed to fetch models: ${response.statusCode} - ${response.body}',
+      );
     }
 
     final data = json.decode(response.body) as Map<String, dynamic>;
@@ -140,8 +139,9 @@ class ModelsCommand extends Command<int> {
   }
 
   Future<int> _listModels(ConfigManager configManager) async {
-    final progress =
-        _logger.progress('Fetching available models from Gemini API');
+    final progress = _logger.progress(
+      'Fetching available models from Gemini API',
+    );
 
     try {
       final models = await _fetchModels();
@@ -168,7 +168,8 @@ class ModelsCommand extends Command<int> {
           continue;
         }
 
-        final isSelected = modelId == currentModel ||
+        final isSelected =
+            modelId == currentModel ||
             model.name == currentModel ||
             model.name == 'models/$currentModel';
 
@@ -202,14 +203,18 @@ class ModelsCommand extends Command<int> {
       _logger.info('');
 
       // Print header
-      _printTableRow({
-        'selected': '',
-        'model': 'Model ID',
-        'name': 'Display Name',
-        'version': 'Version',
-        'input': 'Input Tokens',
-        'output': 'Output Tokens',
-      }, colWidths, isHeader: true);
+      _printTableRow(
+        {
+          'selected': '',
+          'model': 'Model ID',
+          'name': 'Display Name',
+          'version': 'Version',
+          'input': 'Input Tokens',
+          'output': 'Output Tokens',
+        },
+        colWidths,
+        isHeader: true,
+      );
 
       _printTableSeparator(colWidths);
 
@@ -225,10 +230,12 @@ class ModelsCommand extends Command<int> {
       );
       _logger.info('');
       _logger.info('To select a model:');
-      _logger
-          .info('  • Use: ${lightCyan.wrap('ment models --set <model-id>')}');
       _logger.info(
-          '  • Or:  ${lightCyan.wrap('ment models --select')} for interactive selection');
+        '  • Use: ${lightCyan.wrap('ment models --set <model-id>')}',
+      );
+      _logger.info(
+        '  • Or:  ${lightCyan.wrap('ment models --select')} for interactive selection',
+      );
 
       return ExitCode.success.code;
     } catch (e) {
@@ -239,8 +246,9 @@ class ModelsCommand extends Command<int> {
   }
 
   Future<int> _selectModelInteractively(ConfigManager configManager) async {
-    final progress =
-        _logger.progress('Fetching available models from Gemini API');
+    final progress = _logger.progress(
+      'Fetching available models from Gemini API',
+    );
 
     try {
       final models = await _fetchModels();
@@ -284,7 +292,8 @@ class ModelsCommand extends Command<int> {
         final isCurrentModel = modelId == currentModel;
         final marker = isCurrentModel ? ' ✓' : '';
 
-        final choice = '$displayName$marker\n'
+        final choice =
+            '$displayName$marker\n'
             '  └─ ID: $modelId | v$version | '
             'Input: $inputTokens | Output: $outputTokens';
 

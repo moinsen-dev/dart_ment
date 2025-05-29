@@ -21,7 +21,8 @@ class GeminiService {
     required String issue,
     required String filePath,
   }) async {
-    final prompt = '''
+    final prompt =
+        '''
 You are a Dart/Flutter expert. Fix the following linting issue in the code.
 
 File: $filePath
@@ -51,7 +52,8 @@ IMPORTANT: Return ONLY the fixed Dart code without any markdown formatting, code
     required String code,
     required String filePath,
   }) async {
-    final prompt = '''
+    final prompt =
+        '''
 You are a Dart/Flutter expert. Analyze the following code and provide improvement suggestions.
 
 File: $filePath
@@ -95,24 +97,22 @@ Provide a list of specific, actionable suggestions to improve code quality, perf
       'contents': [
         {
           'parts': [
-            {'text': prompt}
-          ]
-        }
+            {'text': prompt},
+          ],
+        },
       ],
       'generationConfig': {
         'temperature': 0.1,
         'topK': 1,
         'topP': 1,
         'maxOutputTokens': 8192,
-      }
+      },
     };
 
     try {
       final response = await http.post(
         url,
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: {'Content-Type': 'application/json'},
         body: jsonEncode(requestBody),
       );
 
@@ -129,12 +129,14 @@ Provide a list of specific, actionable suggestions to improve code quality, perf
           }
         }
       } else {
-        throw Exception('API request failed: ${response.statusCode} ${response.body}');
+        throw Exception(
+          'API request failed: ${response.statusCode} ${response.body}',
+        );
       }
     } catch (e) {
       throw Exception('Failed to make API request: $e');
     }
-    
+
     return null;
   }
 }
