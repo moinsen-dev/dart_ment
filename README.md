@@ -181,8 +181,38 @@ ment fix
 # Preview fixes without applying
 ment fix --dry-run
 
-# Use custom config
-ment fix --config .dart_ment.yaml
+# Select a different AI model
+ment fix --model gemini-1.5-pro
+```
+
+### 🤖 Manage AI Models
+
+List and select from available Gemini models:
+
+```bash
+# List all available models
+ment models --list
+
+# Select a model interactively
+ment models --select
+
+# Set a specific model
+ment models --set gemini-1.5-pro
+```
+
+### ⚙️ Configuration Management
+
+Manage your dart_ment configuration:
+
+```bash
+# Show current configuration
+ment config show
+
+# Set configuration values
+ment config set model gemini-1.5-flash
+
+# Show configuration file paths
+ment config path
 ```
 
 ### 🔄 Update dart_ment
@@ -195,37 +225,41 @@ ment update
 
 ## ⚙️ Configuration
 
-### 1. Environment Variable (Simplest)
+dart_ment stores configuration in your home directory at `~/.dart_ment/` for easy access across all projects.
+
+### 1. API Key Setup
+
+Set your Gemini API key using one of these methods:
 
 ```bash
+# Option 1: Using config command (stored securely)
+ment config set gemini_api_key YOUR_API_KEY
+
+# Option 2: Environment variable
 export GEMINI_API_KEY=your_api_key_here
+
+# Option 3: Edit ~/.dart_ment/api_keys.yaml directly
 ```
 
 ### 2. Configuration File
 
-Create `.dart_ment.yaml` in your project root:
+Configuration is stored at `~/.dart_ment/config.yaml`:
 
 ```yaml
-# AI Configuration
-llm:
-  gemini:
-    api_key: YOUR_API_KEY # Can also use env var
-    model: "gemini-pro"
-    temperature: 0.7
-    max_tokens: 2000
+# Default AI model
+model: gemini-1.5-flash
 
 # Analysis Settings
 analysis:
   include:
-    - lib/**
-    - bin/**
-    - test/**
+    - lib/**/*.dart
+    - bin/**/*.dart
+    - test/**/*.dart
   exclude:
     - "**/*.g.dart"
     - "**/*.freezed.dart"
-    - "**/generated/**"
 
-# Fix Behavior
+# Fix Settings
 fixes:
   backup: true          # Create .backup files
   interactive: false    # Auto-apply fixes
