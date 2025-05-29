@@ -5,7 +5,7 @@ class GeminiService {
   GeminiService({required this.apiKey});
 
   final String apiKey;
-  
+
   /// Initialize the Gemini service
   void initialize() {
     Gemini.init(apiKey: apiKey);
@@ -37,7 +37,7 @@ Provide only the fixed code without explanations. The code should be properly fo
           Part.text(prompt),
         ],
       );
-      
+
       return response?.output;
     } catch (e) {
       throw Exception('Failed to generate fix: $e');
@@ -68,20 +68,19 @@ Provide a list of specific, actionable suggestions to improve code quality, perf
           Part.text(prompt),
         ],
       );
-      
+
       if (response?.output == null) return [];
-      
+
       // Parse the response into a list of suggestions
       final suggestions = response!.output!
           .split('\n')
           .where(
             (line) =>
-                line.trim().startsWith('•') ||
-                line.trim().startsWith('-'),
+                line.trim().startsWith('•') || line.trim().startsWith('-'),
           )
           .map((line) => line.trim().substring(1).trim())
           .toList();
-      
+
       return suggestions;
     } catch (e) {
       throw Exception('Failed to analyze code: $e');

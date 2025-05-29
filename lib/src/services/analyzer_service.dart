@@ -29,13 +29,14 @@ class AnalyzerService {
     final excludes = excludePaths ?? ['**/*.g.dart', '**/*.freezed.dart'];
 
     for (final include in includes) {
-      final directory = Directory(path.join(projectPath, include.split('/').first));
+      final directory =
+          Directory(path.join(projectPath, include.split('/').first));
       if (!directory.existsSync()) continue;
 
       await for (final entity in directory.list(recursive: true)) {
         if (entity is File && entity.path.endsWith('.dart')) {
           final relativePath = path.relative(entity.path, from: projectPath);
-          
+
           // Check if file should be excluded
           var shouldExclude = false;
           for (final exclude in excludes) {
@@ -44,7 +45,7 @@ class AnalyzerService {
               break;
             }
           }
-          
+
           if (!shouldExclude) {
             dartFiles.add(entity.path);
           }
@@ -93,7 +94,8 @@ class AnalyzerService {
       final parts = pattern.split('**');
       if (parts.length == 2) {
         final prefix = parts[0];
-        final suffix = parts[1].startsWith('/') ? parts[1].substring(1) : parts[1];
+        final suffix =
+            parts[1].startsWith('/') ? parts[1].substring(1) : parts[1];
         return filePath.startsWith(prefix) && filePath.endsWith(suffix);
       }
     }

@@ -49,10 +49,10 @@ class FixCommand extends Command<int> {
       final config = await _loadConfiguration();
       final llmConfig = config['llm'] as Map<String, dynamic>?;
       final geminiConfig = llmConfig?['gemini'] as Map<String, dynamic>?;
-      final apiKey = argResults?['api-key'] as String? ?? 
-          geminiConfig?['api_key'] as String? ?? 
+      final apiKey = argResults?['api-key'] as String? ??
+          geminiConfig?['api_key'] as String? ??
           Platform.environment['GEMINI_API_KEY'];
-      
+
       if (apiKey == null || apiKey.isEmpty) {
         _logger.err(
           'API key not found. Please provide it via --api-key flag, '
@@ -62,9 +62,8 @@ class FixCommand extends Command<int> {
       }
 
       // Initialize services
-      final geminiService = GeminiService(apiKey: apiKey)
-        ..initialize();
-      
+      final geminiService = GeminiService(apiKey: apiKey)..initialize();
+
       final analyzerService = AnalyzerService(
         projectPath: Directory.current.path,
       );
@@ -74,17 +73,17 @@ class FixCommand extends Command<int> {
       final progress = _logger.progress('Scanning for Dart files');
       final analysisConfig = config['analysis'] as Map<String, dynamic>?;
       final dartFiles = await analyzerService.getDartFiles(
-        includePaths: (analysisConfig?['include'] as List<dynamic>?)
-            ?.cast<String>(),
-        excludePaths: (analysisConfig?['exclude'] as List<dynamic>?)
-            ?.cast<String>(),
+        includePaths:
+            (analysisConfig?['include'] as List<dynamic>?)?.cast<String>(),
+        excludePaths:
+            (analysisConfig?['exclude'] as List<dynamic>?)?.cast<String>(),
       );
       progress.complete('Found ${dartFiles.length} Dart files');
 
       // Analyze files and collect issues
       var totalIssues = 0;
       final filesWithIssues = <String, List<String>>{};
-      
+
       final analysisProgress = _logger.progress('Analyzing files');
       for (final file in dartFiles) {
         final errors = await analyzerService.analyzeFile(file);
@@ -105,19 +104,19 @@ class FixCommand extends Command<int> {
       // Generate and apply fixes
       final isDryRun = argResults?['dry-run'] as bool? ?? false;
       var fixedCount = 0;
-      
+
       for (final entry in filesWithIssues.entries) {
         final filePath = entry.key;
         final issues = entry.value;
         final relativePath = path.relative(filePath);
-        
+
         _logger.info('\nProcessing $relativePath (${issues.length} issues)');
-        
+
         final fileContent = await analyzerService.getFileContent(filePath);
-        
+
         for (final issue in issues) {
           _logger.detail('  Issue: $issue');
-          
+
           final fixProgress = _logger.progress('  Generating fix...');
           try {
             final fixedCode = await geminiService.generateFix(
@@ -125,10 +124,10 @@ class FixCommand extends Command<int> {
               issue: issue,
               filePath: relativePath,
             );
-            
+
             if (fixedCode != null && fixedCode.isNotEmpty) {
               fixProgress.complete('  Fix generated');
-              
+
               if (isDryRun) {
                 _logger.info('  [DRY RUN] Would apply fix');
               } else {
@@ -137,7 +136,7 @@ class FixCommand extends Command<int> {
                 if (fixesConfig?['backup'] == true) {
                   await File(filePath).copy('$filePath.backup');
                 }
-                
+
                 // Apply fix
                 await File(filePath).writeAsString(fixedCode);
                 _logger.success('  Fix applied');
@@ -160,19 +159,19 @@ class FixCommand extends Command<int> {
           'Run "dart analyze" to verify the fixes.',
         );
       }
-      
+
       return ExitCode.success.code;
     } catch (e) {
       _logger.err('Error while applying fixes: $e');
       return ExitCode.software.code;
     }
   }
-  
+
   Future<Map<String, dynamic>> _loadConfiguration() async {
     try {
-      final configPath = argResults?['config'] as String? ?? 
+      final configPath = argResults?['config'] as String? ??
           path.join(Directory.current.path, '.dart_ment.yaml');
-      
+
       final configFile = File(configPath);
       if (configFile.existsSync()) {
         final content = await configFile.readAsString();
@@ -182,7 +181,7 @@ class FixCommand extends Command<int> {
     } catch (e) {
       _logger.detail('Could not load custom config: $e');
     }
-    
+
     // Return empty config if no custom config found
     return {};
   }
