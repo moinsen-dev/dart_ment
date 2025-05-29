@@ -69,7 +69,7 @@ analysis:
 # Fix settings
 fixes:
   # Create backup files before applying fixes
-  backup: true
+  backup: false
   # Maximum fixes to apply in a single run
   max_fixes: 100
 

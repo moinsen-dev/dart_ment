@@ -5,6 +5,7 @@ import 'package:dart_ment/src/config/config_manager.dart';
 import 'package:dart_ment/src/models/ai_models.dart';
 import 'package:dart_ment/src/services/analyzer_service.dart';
 import 'package:dart_ment/src/services/gemini_service.dart';
+import 'package:dart_style/dart_style.dart';
 import 'package:mason_logger/mason_logger.dart';
 import 'package:path/path.dart' as path;
 
@@ -40,6 +41,11 @@ class FixCommand extends Command<int> {
         'dry-run',
         help: 'Show fixes without applying them',
         negatable: false,
+      )
+      ..addOption(
+        'max-iterations',
+        help: 'Maximum number of fix iterations per file',
+        defaultsTo: '3',
       );
   }
 
@@ -183,68 +189,131 @@ class FixCommand extends Command<int> {
 
       // Generate and apply fixes
       final isDryRun = argResults?['dry-run'] as bool? ?? false;
-      var fixedCount = 0;
+      final maxIterations = int.tryParse(
+            argResults?['max-iterations'] as String? ?? '3',
+          ) ??
+          3;
+      var totalFixedCount = 0;
       var currentFileNum = 0;
       final totalFiles = filesWithIssues.length;
+      
+      // Create DartFormatter instance
+      final formatter = DartFormatter(
+        languageVersion: DartFormatter.latestLanguageVersion,
+      );
 
       for (final entry in filesWithIssues.entries) {
         final filePath = entry.key;
-        final issues = entry.value;
         final relativePath =
             path.relative(filePath, from: Directory.current.path);
         currentFileNum++;
 
         _logger.info(
-          '\n📄 Processing file $currentFileNum/$totalFiles: $relativePath '
-          '(${issues.length} ${issues.length == 1 ? 'issue' : 'issues'})',
+          '\n📄 Processing file $currentFileNum/$totalFiles: $relativePath',
         );
 
+        // Iterate up to maxIterations to fix all issues
         var fileContent = await analyzerService.getFileContent(filePath);
-        var issueNum = 0;
+        var iteration = 0;
+        var hasRemainingIssues = true;
 
-        for (final issue in issues) {
-          issueNum++;
-          final issueProgress =
-              ((issueNum / issues.length) * 100).toStringAsFixed(0);
-
-          _logger.detail('  Issue $issueNum/${issues.length}: $issue');
-
-          final fixProgress = _logger.progress(
-            '  Generating fix ($issueProgress% of file)...',
-          );
-          try {
-            final fixedCode = await geminiService.generateFix(
-              code: fileContent,
-              issue: issue,
-              filePath: relativePath,
-            );
-
-            if (fixedCode != null && fixedCode.isNotEmpty) {
-              fixProgress.complete('  ✓ Fix generated');
-
-              if (isDryRun) {
-                _logger.info('  [DRY RUN] Would apply fix');
-              } else {
-                // Backup original file if configured (only on first fix)
-                if (issueNum == 1) {
-                  final fixesConfig = config['fixes'] as Map<String, dynamic>?;
-                  if (fixesConfig?['backup'] == true) {
-                    await File(filePath).copy('$filePath.backup');
-                    _logger.detail('  Created backup: $filePath.backup');
-                  }
-                }
-
-                // Apply fix and update file content for next iteration
-                await File(filePath).writeAsString(fixedCode);
-                fileContent = fixedCode;
-                _logger.success('  ✓ Fix applied');
-                fixedCount++;
-              }
-            } else {
-              fixProgress.fail('  ✗ Could not generate fix');
+        while (hasRemainingIssues && iteration < maxIterations) {
+          iteration++;
+          
+          // Re-analyze the file to get current issues
+          final currentErrors = await analyzerService.analyzeFile(filePath);
+          if (currentErrors.isEmpty) {
+            hasRemainingIssues = false;
+            if (iteration > 1) {
+              _logger.success('  ✓ All issues fixed after $iteration iterations');
             }
-          } catch (e) {
-            fixProgress.fail('  ✗ Error: $e');
+            break;
+          }
+
+          final issues = currentErrors.map((e) => e.message).toList();
+          _logger.info(
+            '  Iteration $iteration/$maxIterations: '
+            '${issues.length} ${issues.length == 1 ? 'issue' : 'issues'} remaining',
+          );
+
+          var fixedInIteration = 0;
+          var issueNum = 0;
+
+          for (final issue in issues) {
+            issueNum++;
+            final issueProgress =
+                ((issueNum / issues.length) * 100).toStringAsFixed(0);
+
+            _logger.detail('    Issue $issueNum/${issues.length}: $issue');
+
+            final fixProgress = _logger.progress(
+              '    Generating fix ($issueProgress% of iteration)...',
+            );
+            try {
+              final fixedCode = await geminiService.generateFix(
+                code: fileContent,
+                issue: issue,
+                filePath: relativePath,
+              );
+
+              if (fixedCode != null && fixedCode.isNotEmpty) {
+                fixProgress.complete('    ✓ Fix generated');
+
+                if (isDryRun) {
+                  _logger.info('    [DRY RUN] Would apply fix');
+                  fixedInIteration++;
+                } else {
+                  // Apply fix and update file content for next iteration
+                  fileContent = fixedCode;
+                  _logger.success('    ✓ Fix applied');
+                  fixedInIteration++;
+                  totalFixedCount++;
+                }
+              } else {
+                fixProgress.fail('    ✗ Could not generate fix');
+              }
+            } catch (e) {
+              fixProgress.fail('    ✗ Error: $e');
+            }
+          }
+
+          // Write the updated content after all fixes in this iteration
+          if (!isDryRun && fixedInIteration > 0) {
+            try {
+              // Format the code before writing
+              final formattedCode = formatter.format(fileContent);
+              await File(filePath).writeAsString(formattedCode);
+              fileContent = formattedCode;
+              _logger.detail('  ✓ Code formatted and saved');
+            } catch (e) {
+              // If formatting fails, save without formatting
+              await File(filePath).writeAsString(fileContent);
+              _logger.detail('  ⚠️  Could not format code: $e');
+            }
+          }
+
+          // If no fixes were applied in this iteration, stop trying
+          if (fixedInIteration == 0) {
+            _logger.warn(
+              '  ⚠️  Could not fix remaining issues after $iteration iterations',
+            );
+            hasRemainingIssues = false;
+          }
+          
+          // In dry-run mode, only do one iteration
+          if (isDryRun) {
+            hasRemainingIssues = false;
+          }
+        }
+
+        // Final check if we hit max iterations
+        if (hasRemainingIssues && iteration >= maxIterations) {
+          final remainingErrors = await analyzerService.analyzeFile(filePath);
+          if (remainingErrors.isNotEmpty) {
+            _logger.warn(
+              '  ⚠️  Reached maximum iterations. '
+              '${remainingErrors.length} issues remaining.',
+            );
           }
         }
       }
@@ -253,7 +322,7 @@ class FixCommand extends Command<int> {
         _logger.info('\nDry run completed. No files were modified.');
       } else {
         _logger.success(
-          '\nFixed $fixedCount issues. '
+          '\nFixed $totalFixedCount issues. '
           'Run "dart analyze" to verify the fixes.',
         );
       }

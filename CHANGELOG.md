@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.1] - 2025-05-29
+
+### Added
+- **Iterative Fix Logic**: Fix command now iterates up to a maximum number of times to fix all issues
+  - Default 3 iterations, configurable with `--max-iterations` flag
+  - Re-analyzes files after each iteration to catch remaining issues
+  - Shows progress for each iteration with remaining issue count
+- **Code Formatting**: Automatically formats fixed code using dart_style
+  - Ensures consistent formatting after AI fixes
+  - Gracefully handles formatting errors
+
+### Changed
+- **Improved Fix Progress**: Better progress reporting showing iterations and issue counts
+- **Backup Default**: Changed default backup setting to false (most users have version control)
+- **Dry Run Behavior**: In dry-run mode, only performs one iteration to show what would be fixed
+
+### Fixed
+- **Fix Command Efficiency**: Now properly handles cases where AI fixes may introduce new issues
+- **Progress Messages**: Clearer messaging about iteration progress and remaining issues
+
 ## [0.2.0] - 2025-05-29
 
 ### Added
