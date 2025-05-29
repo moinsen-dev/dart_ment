@@ -1,0 +1,17 @@
+analyzer:
+  exclude:
+    - "**/*.g.dart"
+    - "**/*.freezed.dart"
+  errors:
+    invalid_annotation_target: ignore
+
+linter:
+  rules:
+    - prefer_single_quotes
+    - prefer_final_fields
+    - unnecessary_this
+    - avoid_print
+    - unnecessary_new
+    - prefer_const_constructors
+    - sort_constructors_first
+    - public_member_api_docs

@@ -275,6 +275,22 @@ dart test
 # Make your changes and submit a PR!
 ```
 
+### 🚀 Releasing
+
+New releases are automatically created when version tags are pushed:
+
+```bash
+# Tag a new version
+git tag v0.1.0
+git push origin v0.1.0
+```
+
+This will automatically:
+- Create a GitHub release with changelog
+- Publish to pub.dev (if credentials are configured)
+
+See [.github/workflows/README.md](.github/workflows/README.md) for details.
+
 ## 📊 Roadmap
 
 - [ ] VS Code Extension

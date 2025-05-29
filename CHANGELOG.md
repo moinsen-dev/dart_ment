@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.0] - 2025-05-29
+
+### Added
+- **User Configuration Directory**: Created `~/.dart_ment/` directory for storing user configurations and API keys
+- **Model Selection**: Added support for selecting different AI models via `--model` flag
+- **Configuration Manager**: Implemented centralized configuration management in user's home directory
+- **API Key Security**: Secure storage of API keys in separate file with restrictive permissions
+- **AI Response Parser**: Robust parsing of AI responses to handle various formatting styles
+- **Multiple Model Support**: Framework for supporting multiple AI providers (Gemini, OpenAI, Anthropic)
+
+### Changed
+- **Configuration Location**: Moved from project-local config to user home directory for better usability
+- **API Key Management**: Improved API key handling with secure storage and multiple fallback options
+- **Error Messages**: Enhanced error messages for missing API keys with clear instructions
+
+### Fixed
+- **AI Response Formatting**: Fixed issue where AI responses with markdown code blocks were not properly parsed
+- **Test File Parsing**: Corrected handling of AI-generated fixes that included code fence markers
+
 ## [0.1.0] - 2025-05-29
 
 ### Added
