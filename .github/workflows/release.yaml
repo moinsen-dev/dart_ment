@@ -3,8 +3,8 @@ name: Release
 on:
   push:
     tags:
-      - 'v[0-9]+.[0-9]+.[0-9]+'
-      - '[0-9]+.[0-9]+.[0-9]+'
+      - "v[0-9]+.[0-9]+.[0-9]+"
+      - "[0-9]+.[0-9]+.[0-9]+"
 
 permissions:
   contents: write
@@ -24,7 +24,7 @@ jobs:
           sdk: stable
 
       - name: Install dependencies
-        run: dart pub get
+        run: flutter pub get
 
       - name: Run tests
         run: dart test
@@ -42,19 +42,19 @@ jobs:
           # Extract the changelog section for this version
           VERSION="${{ steps.version.outputs.version }}"
           CHANGELOG=$(sed -n "/^## \[$VERSION\]/,/^## \[/p" CHANGELOG.md | sed '$d' || echo "")
-          
+
           if [ -z "$CHANGELOG" ]; then
             CHANGELOG=$(cat <<EOF
           ## Release $VERSION
-          
+
           No specific changelog entries found for this version.
-          
+
           ### What's Changed
           * See [commit history](https://github.com/${{ github.repository }}/compare/v${{ steps.version.outputs.version }}...HEAD) for details.
           EOF
           )
           fi
-          
+
           # Write to temporary file to preserve formatting
           echo "$CHANGELOG" > changelog_content.txt
           echo "changelog_file=changelog_content.txt" >> $GITHUB_OUTPUT
@@ -76,7 +76,7 @@ jobs:
           # Create credentials file
           mkdir -p ~/.config/dart
           echo '${{ secrets.PUB_CREDENTIALS }}' > ~/.config/dart/pub-credentials.json
-          
+
           # Publish to pub.dev
           dart pub publish --force
         env:
